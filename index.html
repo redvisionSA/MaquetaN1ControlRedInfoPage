@@ -1093,6 +1093,7 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
   touch-action:pan-y; user-select:none; outline:none;
 }
 .tech-stage:focus-visible .tech-card.is-active{ box-shadow:var(--glass-shadow-strong), 0 0 0 3px color-mix(in srgb, var(--tech) 55%, transparent); }
+.tech-feed{ position:absolute; width:2px; height:2px; opacity:0; pointer-events:none; }
 .tech-track{ position:relative; width:100%; height:100%; transform-style:preserve-3d; display:flex; align-items:center; justify-content:center; }
 
 /* ---- Tarjeta Liquid Glass ---- */
@@ -1387,6 +1388,14 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
       </div>
     </div>
 
+    <!-- Feed de cámara compartido por los cuatro simuladores: un solo <video> en loop
+         (11 s, seam con crossfade) que cada canvas recorta y procesa. Las cajas de
+         personas vienen de un tracking precalculado fotograma a fotograma. -->
+    <video id="showroomFeed" class="tech-feed" muted loop playsinline preload="none"
+           poster="video/showroom-plaza-poster.jpg" data-tracks="video/showroom-plaza.tracks.json" aria-hidden="true">
+      <source src="video/showroom-plaza.mp4" type="video/mp4">
+    </video>
+
     <div class="tech-stage" id="techStage" tabindex="0" aria-roledescription="carrusel" aria-label="Carrusel de tecnologías Hikvision. Usá las flechas del teclado para navegar.">
       <button type="button" class="tech-arrow prev" id="techPrev" aria-label="Tecnología anterior">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -1411,7 +1420,7 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
           <div class="tc-demo" data-demo="colorvu" aria-label="Simulador: infrarrojo convencional vs ColorVu. Arrastrá para comparar.">
             <canvas></canvas>
             <div class="tc-demo-hud"><span>IR convencional</span><span class="tag">ColorVu · F1.0</span></div>
-            <div class="tc-demo-hint">Arrastrá el divisor para comparar</div>
+            <div class="tc-demo-hint">Arrastrá el divisor: IR vs ColorVu</div>
           </div>
           <div class="tc-body">
             <figure class="tc-product">
@@ -1485,7 +1494,7 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
           <div class="tc-demo" data-demo="tandemvu" aria-label="Simulador: vista panorámica y PTZ en tándem. Movete sobre la panorámica para dirigir el PTZ.">
             <canvas></canvas>
             <div class="tc-demo-hud"><span>Panorámica 180°</span><span class="tag">PTZ · 25× auto-tracking</span></div>
-            <div class="tc-demo-hint">Movete sobre la panorámica para dirigir el PTZ</div>
+            <div class="tc-demo-hint">Movete sobre la panorámica para dirigir el PTZ · o dejalo seguir solo</div>
           </div>
           <div class="tc-body">
             <figure class="tc-product">
@@ -2619,7 +2628,7 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
   var active = 0;
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var hasHover = window.matchMedia && window.matchMedia('(hover:hover)').matches;
-  var stageVisible = true;
+  var stageVisible = !('IntersectionObserver' in window);
 
   /* ---------------------------------------------------------------- */
   /* Carrusel                                                          */
@@ -2726,9 +2735,54 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
   window.addEventListener('resize', function(){ layout(false); }, {passive:true});
 
   /* ---------------------------------------------------------------- */
-  /* Runtime de demos                                                  */
+  /* Feed de cámara compartido: un <video> en loop + tracks de personas */
+  /* (YOLO11 + ByteTrack, precalculados fotograma a fotograma)           */
   /* ---------------------------------------------------------------- */
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var video = document.getElementById('showroomFeed');
+  var poster = new Image(); poster.src = video.getAttribute('poster');
+  var feedW = 1280, feedH = 720;          // se actualiza con loadedmetadata
+  var tracks = null;                      // { fps, frames:[ [ [id,x,y,w,h,conf], ... ], ... ] } (x,y,w,h en 0..1000)
+  var feedLoaded = false;
+
+  video.addEventListener('loadedmetadata', function(){ feedW = video.videoWidth || feedW; feedH = video.videoHeight || feedH; });
+  function loadFeed(){
+    if(feedLoaded) return; feedLoaded = true;
+    video.preload = 'auto'; video.load();
+    fetch(video.getAttribute('data-tracks')).then(function(r){ return r.json(); }).then(function(j){ tracks = j; }).catch(function(){});
+  }
+  function playFeed(){ if(reduceMotion) return; var p = video.play(); if(p && p.catch) p.catch(function(){}); }
+  function pauseFeed(){ if(!video.paused) video.pause(); }
+  function feedReady(){ return video.readyState >= 2; }
+
+  /* Recorte "cover" del feed en un rectángulo destino; devuelve el mapeo para las cajas */
+  function coverRect(dw, dh, cy){
+    var s = Math.max(dw/feedW, dh/feedH);
+    var sw = dw/s, sh = dh/s;
+    var sx = (feedW - sw)/2, sy = (feedH - sh)*(cy === undefined ? .5 : cy);
+    return { sx:sx, sy:sy, sw:sw, sh:sh, s:s };
+  }
+  function drawFeed(ctx, dx, dy, dw, dh, r){
+    var src = feedReady() ? video : (poster.complete && poster.naturalWidth ? poster : null);
+    if(!src){ ctx.fillStyle = '#0b0f1e'; ctx.fillRect(dx,dy,dw,dh); return; }
+    ctx.drawImage(src, r.sx, r.sy, r.sw, r.sh, dx, dy, dw, dh);
+  }
+  /* Cajas de personas en el instante actual del video, interpoladas entre fotogramas */
+  function people(){
+    if(!tracks || !tracks.frames.length) return [];
+    var f = video.currentTime * tracks.fps, i0 = Math.floor(f) % tracks.frames.length, i1 = (i0+1) % tracks.frames.length, k = f - Math.floor(f);
+    var a = tracks.frames[i0], b = tracks.frames[i1], out = [], byId = {};
+    for(var j=0;j<b.length;j++) byId[b[j][0]] = b[j];
+    for(var m=0;m<a.length;m++){
+      var p = a[m], q = byId[p[0]] || p;
+      out.push({ id:p[0], x:(p[1]+(q[1]-p[1])*k)/1000, y:(p[2]+(q[2]-p[2])*k)/1000, w:(p[3]+(q[3]-p[3])*k)/1000, h:(p[4]+(q[4]-p[4])*k)/1000, c:p[5] });
+    }
+    return out;
+  }
+  /* proyecta una caja (0..1 del feed) al destino recortado */
+  function project(p, r, dx, dy, dw, dh){
+    return { x: dx + (p.x*feedW - r.sx)*r.s, y: dy + (p.y*feedH - r.sy)*r.s, w: p.w*feedW*r.s, h: p.h*feedH*r.s, id:p.id, c:p.c };
+  }
 
   // Grano compartido: un mosaico de ruido que se reposiciona cada frame
   var noise = document.createElement('canvas'); noise.width = 160; noise.height = 160;
@@ -2762,7 +2816,7 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
     if(dashed) ctx.setLineDash([4,4]);
     ctx.strokeRect(x, y, w, h);
     ctx.setLineDash([]);
-    var c = 7; ctx.lineWidth = 2.4;
+    var c = Math.min(7, w*.3); ctx.lineWidth = 2.4;
     ctx.beginPath();
     ctx.moveTo(x, y+c); ctx.lineTo(x,y); ctx.lineTo(x+c,y);
     ctx.moveTo(x+w-c, y); ctx.lineTo(x+w,y); ctx.lineTo(x+w,y+c);
@@ -2775,117 +2829,6 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
       ctx.fillStyle = '#0a0d18'; ctx.textBaseline = 'middle'; ctx.fillText(label, x+5, y-8.5);
     }
     ctx.restore();
-  }
-
-  /* ---------- Escena nocturna vectorial (la misma para los 4 demos) ---------- */
-  function drawCar(ctx, x, y, s, color, dir, lights){
-    ctx.save(); ctx.translate(x, y); ctx.scale(dir*s, s);
-    ctx.fillStyle = color;
-    rr(ctx, -34, -14, 68, 16, 4); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(-22,-14); ctx.lineTo(-14,-26); ctx.lineTo(16,-26); ctx.lineTo(26,-14); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#9fb8d6'; ctx.beginPath(); ctx.moveTo(-19,-14); ctx.lineTo(-12,-24); ctx.lineTo(0,-24); ctx.lineTo(0,-14); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(3,-14); ctx.lineTo(3,-24); ctx.lineTo(14,-24); ctx.lineTo(22,-14); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#1b1f2e';
-    ctx.beginPath(); ctx.arc(-20,3,6,0,Math.PI*2); ctx.arc(20,3,6,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#8a8f9c'; ctx.beginPath(); ctx.arc(-20,3,2.5,0,Math.PI*2); ctx.arc(20,3,2.5,0,Math.PI*2); ctx.fill();
-    if(lights){
-      ctx.fillStyle = '#fff5cc'; ctx.fillRect(30,-11,4,4);
-      ctx.fillStyle = '#ff3b30'; ctx.fillRect(-34,-11,3,4);
-    }
-    ctx.restore();
-  }
-  function drawPerson(ctx, x, y, s, jacket, phase){
-    var sw = Math.sin(phase)*7;
-    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    ctx.strokeStyle = '#2b2f45'; ctx.lineWidth = 5; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(0,-20); ctx.lineTo(-sw*.6, 0); ctx.moveTo(0,-20); ctx.lineTo(sw*.6, 0); ctx.stroke();
-    ctx.fillStyle = jacket; rr(ctx, -8, -44, 16, 26, 5); ctx.fill();
-    ctx.strokeStyle = jacket; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(-7,-40); ctx.lineTo(-10+sw*.5,-22); ctx.moveTo(7,-40); ctx.lineTo(10-sw*.5,-22); ctx.stroke();
-    ctx.fillStyle = '#e8c9a8'; ctx.beginPath(); ctx.arc(0,-51,6,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-  }
-  function drawDog(ctx, x, y, s, phase){
-    var sw = Math.sin(phase*2)*3;
-    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    ctx.fillStyle = '#b8894a';
-    rr(ctx, -14, -12, 26, 10, 4); ctx.fill();
-    ctx.beginPath(); ctx.arc(14,-11,5,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle = '#b8894a'; ctx.lineWidth = 3; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(-10,-3); ctx.lineTo(-11+sw,0); ctx.moveTo(8,-3); ctx.lineTo(9-sw,0); ctx.moveTo(-14,-9); ctx.lineTo(-19,-15); ctx.stroke();
-    ctx.restore();
-  }
-  function drawTree(ctx, x, y, s, sway){
-    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    ctx.fillStyle = '#3d2b1f'; ctx.fillRect(-4, -40, 8, 40);
-    ctx.translate(0,-44); ctx.rotate(sway);
-    ctx.fillStyle = '#2f5f3a';
-    ctx.beginPath(); ctx.arc(0,0,22,0,Math.PI*2); ctx.arc(-16,8,16,0,Math.PI*2); ctx.arc(16,8,16,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-  }
-  function drawLamp(ctx, x, groundY, h, warm){
-    ctx.fillStyle = '#4a4f66'; ctx.fillRect(x-2, groundY-h, 4, h);
-    ctx.fillRect(x-14, groundY-h, 16, 4);
-    ctx.fillStyle = warm ? '#ffd9a0' : '#d9dcff';
-    ctx.fillRect(x-14, groundY-h+4, 12, 4);
-  }
-
-  /* objetos móviles compartidos (posiciones en función del tiempo) */
-  function actors(t, w, h){
-    var g = h*0.80;
-    return {
-      ground: g,
-      car:    { x: (w+90) - ((t*38) % (w+180)), y: g-4, s: .78, dir:-1, color:'#c0392b', kind:'vehicle', bw:56, bh:34 },
-      car2:   { x: ((t*22+200) % (w+220)) - 110,  y: g-40, s: .5,  dir: 1, color:'#2c6fbf', kind:'vehicle', bw:36, bh:22 },
-      person: { x: ((t*26+40) % (w+120)) - 60,   y: g-2,  s: .78, kind:'human', bw:24, bh:46, phase:t*6 },
-      dog:    { x: (w+40) - ((t*44+300) % (w+140)), y: g-1, s: .8, kind:'animal', bw:30, bh:16, phase:t*6 },
-      tree:   { x: w*0.86, y: g, s: 1, sway: Math.sin(t*1.7)*0.06 + Math.sin(t*4.3)*0.02, kind:'foliage', bw:50, bh:70 }
-    };
-  }
-  /* la escena base: cielo, edificios, calle, lámpara, actores.
-     opts.color=false → paleta IR (la desaturación viene después). opts.lamp: 'warm'|'cold'|false */
-  function drawScene(ctx, w, h, t, opts){
-    opts = opts || {};
-    var a = actors(t, w, h), g = a.ground;
-    var sky = ctx.createLinearGradient(0,0,0,g);
-    sky.addColorStop(0, opts.color ? '#0b1030' : '#06070d'); sky.addColorStop(1, opts.color ? '#1d2652' : '#111420');
-    ctx.fillStyle = sky; ctx.fillRect(0,0,w,g);
-    // estrellas
-    ctx.fillStyle = 'rgba(255,255,255,.55)';
-    for(var i=0;i<26;i++){ var sx = ((i*173)%w), sy = ((i*97)%(g*0.5)); ctx.fillRect(sx, sy, 1.2, 1.2); }
-    // skyline
-    ctx.fillStyle = opts.color ? '#161c3d' : '#0e1120';
-    var bx = 0, bi = 0;
-    while(bx < w){ var bw = 26 + ((bi*37)%40), bh = 40 + ((bi*53)%70); ctx.fillRect(bx, g-bh, bw, bh);
-      ctx.fillStyle = opts.color ? 'rgba(255,220,150,.35)' : 'rgba(200,200,220,.25)';
-      for(var wy=g-bh+8; wy<g-10; wy+=12) for(var wx=bx+5; wx<bx+bw-6; wx+=9) if(((wx*7+wy*13+bi)%5)<2) ctx.fillRect(wx,wy,4,5);
-      ctx.fillStyle = opts.color ? '#161c3d' : '#0e1120'; bx += bw + 6; bi++; }
-    // calle
-    ctx.fillStyle = opts.color ? '#262a3f' : '#1a1c26'; ctx.fillRect(0,g,w,h-g);
-    ctx.fillStyle = opts.color ? '#3a3f5c' : '#2a2d3a'; ctx.fillRect(0,g,w,6);
-    ctx.strokeStyle = opts.color ? 'rgba(255,214,102,.75)' : 'rgba(220,220,220,.5)'; ctx.lineWidth = 2; ctx.setLineDash([16,14]);
-    ctx.beginPath(); ctx.moveTo(0, g+ (h-g)*.55); ctx.lineTo(w, g+(h-g)*.55); ctx.stroke(); ctx.setLineDash([]);
-    // lámpara y charco de luz
-    var lx = w*0.28;
-    if(opts.lamp){
-      var warm = opts.lamp === 'warm';
-      var pool = ctx.createRadialGradient(lx, g+10, 0, lx, g+10, w*0.36);
-      pool.addColorStop(0, warm ? 'rgba(255,190,110,.55)' : 'rgba(220,225,255,.40)');
-      pool.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = pool; ctx.fillRect(0,0,w,h);
-      drawLamp(ctx, lx, g, 92, warm);
-      var glow = ctx.createRadialGradient(lx-8, g-90, 0, lx-8, g-90, 34);
-      glow.addColorStop(0, warm ? 'rgba(255,230,180,.9)' : 'rgba(240,244,255,.95)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = glow; ctx.fillRect(lx-50, g-130, 90, 90);
-    } else {
-      drawLamp(ctx, lx, g, 92, false);
-    }
-    drawTree(ctx, a.tree.x, a.tree.y, a.tree.s, a.tree.sway);
-    drawCar(ctx, a.car2.x, a.car2.y, a.car2.s, a.car2.color, a.car2.dir, true);
-    drawPerson(ctx, a.person.x, a.person.y, a.person.s, opts.color ? '#f4c430' : '#d8d8d8', a.person.phase);
-    drawDog(ctx, a.dog.x, a.dog.y, a.dog.s, a.dog.phase);
-    drawCar(ctx, a.car.x, a.car.y, a.car.s, a.car.color, a.car.dir, true);
-    return a;
   }
 
   /* ---------- runtime ---------- */
@@ -2933,12 +2876,13 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
     box.addEventListener('pointercancel', up);
     box.addEventListener('pointerleave', function(){ if(!ptr.down) ptr.active = false; });
     if(window.ResizeObserver) new ResizeObserver(resize).observe(box); else window.addEventListener('resize', resize, {passive:true});
+    poster.addEventListener('load', draw);
     resize();
     return { start:start, stop:stop, draw:draw };
   }
 
   /* ---------------------------------------------------------------- */
-  /* Demo 1 · ColorVu: divisor IR convencional | ColorVu                */
+  /* Demo 1 · ColorVu: divisor IR convencional | ColorVu sobre el feed  */
   /* ---------------------------------------------------------------- */
   var demoDefs = {};
   demoDefs.colorvu = {
@@ -2946,18 +2890,21 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
     draw: function(ctx, w, h, t, ptr, st, hud){
       var target = ptr.active ? ptr.x : (.5 + Math.sin(t*.45)*.22);
       st.split += (target - st.split) * (ptr.down ? .55 : .08);
-      var sx = st.split * w;
-      // derecha: ColorVu (color + luz cálida)
+      var sx = st.split * w, r = coverRect(w, h, .55);
+      // derecha: ColorVu = el feed tal cual, con un leve baño cálido
       ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, w-sx, h); ctx.clip();
-      drawScene(ctx, w, h, t, { color:true, lamp:'warm' });
-      grain(ctx, sx, 0, w-sx, h, .06, t);
+      drawFeed(ctx, 0, 0, w, h, r);
+      var warm = ctx.createRadialGradient(w*.55, h*.1, 0, w*.55, h*.1, w*.7);
+      warm.addColorStop(0,'rgba(255,190,110,.16)'); warm.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = warm; ctx.fillRect(sx,0,w-sx,h);
+      grain(ctx, sx, 0, w-sx, h, .05, t);
       ctx.restore();
-      // izquierda: IR (mono, bloom, grano)
+      // izquierda: IR = mono, bloom central del iluminador, viñeta y grano
       ctx.save(); ctx.beginPath(); ctx.rect(0, 0, sx, h); ctx.clip();
-      drawScene(ctx, w, h, t, { color:false, lamp:'cold' });
+      drawFeed(ctx, 0, 0, w, h, r);
       desaturate(ctx, 0, 0, sx, h, '#c9ccd6');
-      var irHot = ctx.createRadialGradient(w*.5, h*.45, 0, w*.5, h*.45, w*.55);
-      irHot.addColorStop(0,'rgba(255,255,255,.22)'); irHot.addColorStop(1,'rgba(0,0,0,.35)');
+      var irHot = ctx.createRadialGradient(w*.5, h*.5, 0, w*.5, h*.5, w*.6);
+      irHot.addColorStop(0,'rgba(255,255,255,.28)'); irHot.addColorStop(1,'rgba(0,0,0,.45)');
       ctx.fillStyle = irHot; ctx.fillRect(0,0,sx,h);
       grain(ctx, 0, 0, sx, h, .34, t);
       ctx.restore();
@@ -2974,45 +2921,47 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
   };
 
   /* ---------------------------------------------------------------- */
-  /* Demo 2 · AcuSense: clasificación humano/vehículo vs. "movimiento"  */
+  /* Demo 2 · AcuSense: personas reales del feed vs. "movimiento"        */
   /* ---------------------------------------------------------------- */
   demoDefs.acusense = {
-    init: function(){ return { on:true, alarms:0, lastBeat:0, scan:0, seen:{} }; },
+    init: function(){ return { on:true, alarms:0, lastBeat:0, scan:0, seen:{}, noiseBoxes:[] }; },
     onTap: function(st){ st.on = !st.on; st.alarms = 0; st.seen = {}; },
     draw: function(ctx, w, h, t, ptr, st, hud){
-      var a = drawScene(ctx, w, h, t, { color:true, lamp:'warm' });
+      var r = coverRect(w, h, .55);
+      drawFeed(ctx, 0, 0, w, h, r);
       // grilla de análisis (leve), más visible al pasar el puntero
       st.scan += ((ptr.active ? .35 : .12) - st.scan) * .08;
-      ctx.save(); ctx.strokeStyle = 'rgba(0,112,186,'+st.scan+')'; ctx.lineWidth = 1;
+      ctx.save(); ctx.strokeStyle = 'rgba(56,189,248,'+st.scan+')'; ctx.lineWidth = 1;
       for(var gx=0; gx<w; gx+=30){ ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,h); ctx.stroke(); }
       for(var gy=0; gy<h; gy+=30){ ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(w,gy); ctx.stroke(); }
       ctx.restore();
-      // objetivos en cuadro
-      var list = [a.car, a.car2, a.person, a.dog, a.tree];
-      list.forEach(function(o, i){
-        var bx, by;
-        if(o.kind === 'vehicle'){ bx = o.x - o.bw*.62; by = o.y - o.bh*.9; }
-        else if(o.kind === 'human'){ bx = o.x - o.bw*.5; by = o.y - o.bh; }
-        else if(o.kind === 'animal'){ bx = o.x - o.bw*.55; by = o.y - o.bh; }
-        else { bx = o.x - o.bw*.5; by = o.y - o.bh; }
-        var inFrame = bx + o.bw > 0 && bx < w;
-        if(!inFrame){ st.seen[i] = false; return; }
-        var relevant = o.kind === 'human' || o.kind === 'vehicle';
+      var list = people(), liveIds = {};
+      for(var i=0;i<list.length;i++){
+        var p = list[i]; if(p.c < 35) continue;
+        var b = project(p, r, 0, 0, w, h);
+        if(b.x + b.w < 0 || b.x > w || b.y + b.h < 0 || b.y > h) continue;
+        liveIds[p.id] = true;
         if(st.on){
-          if(relevant){
-            hudBox(ctx, bx, by, o.bw, o.bh, '#38bdf8', (o.kind==='human' ? 'PERSONA ' : 'VEHÍCULO ') + (96 + ((i*7)%4)) + '%');
-            if(!st.seen[i]){ st.seen[i] = true; st.alarms++; }
-          } else {
-            hudBox(ctx, bx, by, o.bw, o.bh, 'rgba(255,255,255,.35)', null, true);
-          }
+          hudBox(ctx, b.x, b.y, b.w, b.h, '#38bdf8', 'PERSONA ' + p.c + '%');
+          if(!st.seen[p.id]){ st.seen[p.id] = true; st.alarms++; }
         } else {
-          var blink = Math.sin(t*14 + i) > 0;
-          hudBox(ctx, bx, by, o.bw, o.bh, blink ? '#ff3b30' : '#ff8a80', 'MOVIMIENTO');
-          if(!st.seen[i]){ st.seen[i] = true; st.alarms++; }
-          // el árbol y el perro disparan alarmas repetidas
-          if(!relevant && t - st.lastBeat > .9){ st.lastBeat = t; st.alarms++; }
+          // sin IA: el "movimiento" incluye la sombra larga (abajo-izquierda) y parpadea
+          var blink = Math.sin(t*14 + p.id) > 0;
+          hudBox(ctx, b.x - b.w*1.6, b.y + b.h*.3, b.w*2.6, b.h*.9, blink ? '#ff3b30' : '#ff8a80', 'MOVIMIENTO');
+          if(!st.seen[p.id]){ st.seen[p.id] = true; st.alarms++; }
         }
-      });
+      }
+      if(!st.on){
+        // falsas alarmas espurias sobre el suelo (textura, cambios de luz)
+        if(t - st.lastBeat > .55){
+          st.lastBeat = t; st.alarms++;
+          st.noiseBoxes.push({ x: Math.random()*(w-60), y: h*.25 + Math.random()*(h*.7), w: 26+Math.random()*40, h: 16+Math.random()*24, until: t + .5 });
+        }
+        st.noiseBoxes = st.noiseBoxes.filter(function(nb){ return nb.until > t; });
+        st.noiseBoxes.forEach(function(nb){ hudBox(ctx, nb.x, nb.y, nb.w, nb.h, '#ff8a80', 'MOVIMIENTO', true); });
+      } else {
+        st.noiseBoxes.length = 0;
+      }
       // etiqueta de estado
       ctx.save(); ctx.font = "700 11px 'Plus Jakarta Sans', sans-serif"; ctx.textBaseline = 'middle';
       var label = st.on ? 'ACUSENSE ON · filtrando' : 'ACUSENSE OFF · detección de movimiento';
@@ -3026,32 +2975,44 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
   };
 
   /* ---------------------------------------------------------------- */
-  /* Demo 3 · TandemVu: panorámica arriba, PTZ con zoom abajo           */
+  /* Demo 3 · TandemVu: panorámica arriba, PTZ con zoom sobre una       */
+  /* persona real (auto-tracking) o donde apunte el puntero             */
   /* ---------------------------------------------------------------- */
   demoDefs.tandemvu = {
-    init: function(){ return { tx:.5, ty:.6 }; },
+    init: function(){ return { tx:.5, ty:.6, targetId:null, targetSince:0 }; },
     draw: function(ctx, w, h, t, ptr, st, hud){
-      var panoH = Math.round(h*.56), ptzY = panoH + 4, ptzH = h - ptzY;
-      var a = actors(t, w, panoH);
-      // objetivo: puntero sobre la panorámica, o auto-tracking del auto rojo
-      var gx, gy;
-      if(ptr.active && ptr.y*h < panoH + 8){ gx = ptr.x; gy = Math.min(.9, Math.max(.5, ptr.y*h/panoH)); }
-      else { gx = a.car.x / w; gy = (a.car.y - 14) / panoH; }
-      st.tx += (gx - st.tx) * .12; st.ty += (gy - st.ty) * .12;
+      var panoH = Math.round(h*.5), ptzY = panoH + 4, ptzH = h - ptzY;
+      var r = coverRect(w, panoH, .55);
+      var list = people(), gx, gy, target = null;
+      if(ptr.active && ptr.y*h < panoH + 8){
+        gx = ptr.x; gy = Math.min(.95, Math.max(.05, ptr.y*h/panoH)); st.targetId = null;
+      } else {
+        // auto-tracking: mantener el objetivo mientras siga en cuadro; si no, elegir el de mayor confianza
+        for(var i=0;i<list.length;i++){ if(list[i].id === st.targetId){ target = list[i]; break; } }
+        if(!target || t - st.targetSince > 6){
+          var best = null;
+          for(var j=0;j<list.length;j++){ var p = list[j]; if(p.c < 45 || p.id === st.targetId) continue; if(!best || p.c > best.c) best = p; }
+          if(best){ target = best; st.targetId = best.id; st.targetSince = t; }
+        }
+        if(target){ var b = project(target, r, 0, 0, w, panoH); gx = (b.x + b.w/2)/w; gy = (b.y + b.h/2)/panoH; }
+        else { gx = .5 + Math.sin(t*.3)*.3; gy = .6; }
+      }
+      st.tx += (gx - st.tx) * (ptr.active ? .18 : .12); st.ty += (gy - st.ty) * (ptr.active ? .18 : .12);
       var cx = st.tx*w, cy = st.ty*panoH;
       // panorámica
       ctx.save(); ctx.beginPath(); ctx.rect(0,0,w,panoH); ctx.clip();
-      drawScene(ctx, w, panoH, t, { color:true, lamp:'warm' });
-      // campo de visión del PTZ
-      var zoom = 3.2, fw = w/zoom, fh = ptzH/zoom;
+      drawFeed(ctx, 0, 0, w, panoH, r);
+      var zoom = 2.2, fw = w/zoom, fh = ptzH/zoom;
+      if(target){ var tb = project(target, r, 0, 0, w, panoH); hudBox(ctx, tb.x, tb.y, tb.w, tb.h, '#38bdf8', 'TRACK ' + target.c + '%'); }
       hudBox(ctx, cx-fw/2, cy-fh/2, fw, fh, '#FFB703', 'PTZ');
       ctx.restore();
-      // PTZ: la misma escena vectorial, ampliada (nítida) alrededor del objetivo
+      // PTZ: recorte ampliado del feed alrededor del objetivo (misma escena, misma cámara)
+      var srcX = r.sx + (cx - fw/2)/r.s, srcY = r.sy + (cy - fh/2)/r.s, srcW = fw/r.s, srcH = fh/r.s;
+      srcX = Math.max(0, Math.min(feedW - srcW, srcX)); srcY = Math.max(0, Math.min(feedH - srcH, srcY));
       ctx.save(); ctx.beginPath(); ctx.rect(0,ptzY,w,ptzH); ctx.clip();
-      ctx.translate(w/2, ptzY + ptzH/2); ctx.scale(zoom, zoom); ctx.translate(-cx, -cy);
-      drawScene(ctx, w, panoH, t, { color:true, lamp:'warm' });
+      drawFeed(ctx, 0, ptzY, w, ptzH, { sx:srcX, sy:srcY, sw:srcW, sh:srcH, s:w/srcW });
       ctx.restore();
-      grain(ctx, 0, ptzY, w, ptzH, .05, t);
+      grain(ctx, 0, ptzY, w, ptzH, .06, t);
       // separador + retícula
       ctx.save();
       ctx.fillStyle = 'rgba(255,183,3,.9)'; ctx.fillRect(0, panoH, w, 4);
@@ -3061,7 +3022,7 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
       ctx.beginPath(); ctx.moveTo(rx-rad-8, ry); ctx.lineTo(rx-rad+6, ry); ctx.moveTo(rx+rad-6, ry); ctx.lineTo(rx+rad+8, ry);
       ctx.moveTo(rx, ry-rad-8); ctx.lineTo(rx, ry-rad+6); ctx.moveTo(rx, ry+rad-6); ctx.lineTo(rx, ry+rad+8); ctx.stroke();
       ctx.font = mono(10); ctx.fillStyle = '#FFB703'; ctx.textBaseline = 'bottom';
-      ctx.fillText('PTZ · 25× · TRACKING', 12, h-10);
+      ctx.fillText(target && !ptr.active ? 'PTZ · 25× · AUTO-TRACKING ID ' + target.id : 'PTZ · 25× · MANUAL', 12, h-10);
       ctx.textAlign = 'right'; ctx.fillText('PAN ' + Math.round((st.tx-.5)*180) + '° · TILT ' + Math.round((st.ty-.5)*-40) + '°', w-12, h-10);
       ctx.restore();
       if(hud[1]) hud[1].textContent = ptr.active ? 'PTZ · control manual' : 'PTZ · 25× auto-tracking';
@@ -3072,24 +3033,17 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
   /* Demo 4 · DarkFighterX: visible | IR | fusión, con luz variable      */
   /* ---------------------------------------------------------------- */
   demoDefs.darkfighter = {
-    init: function(){
-      var off = document.createElement('canvas');
-      return { lux:.5, off:off, octx:off.getContext('2d') };
-    },
+    init: function(){ return { lux:.5 }; },
     draw: function(ctx, w, h, t, ptr, st, hud){
       var target = ptr.active ? ptr.x : (.5 + Math.sin(t*.35)*.4);
       st.lux += (target - st.lux) * (ptr.down ? .5 : .06);
       var lux = Math.pow(10, -4 + 4*st.lux);          // 0.0001 … 1 lx
       var light = Math.max(.06, Math.min(1, (Math.log10(lux)+4)/4)); // 0.06 … 1
-      // escena base en offscreen
-      if(st.off.width !== w*dpr || st.off.height !== h*dpr){ st.off.width = w*dpr; st.off.height = h*dpr; }
-      st.octx.setTransform(dpr,0,0,dpr,0,0); st.octx.clearRect(0,0,w,h);
-      drawScene(st.octx, w, h, t, { color:true, lamp:false });
-      var paneW = (w - 8)/3, sx0 = w*0.5 - paneW*.5;   // recorte central de la escena
+      var paneW = (w - 8)/3, r = coverRect(paneW, h, .55);
       function pane(i, label, color, fn){
         var x = i*(paneW+4);
         ctx.save(); ctx.beginPath(); ctx.rect(x,0,paneW,h); ctx.clip();
-        ctx.drawImage(st.off, sx0*dpr, 0, paneW*dpr, h*dpr, x, 0, paneW, h);
+        drawFeed(ctx, x, 0, paneW, h, r);
         fn(x);
         ctx.font = mono(9); ctx.fillStyle = color; ctx.textBaseline = 'bottom';
         ctx.fillText(label, x+10, h-10);
@@ -3136,13 +3090,15 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
     return def ? createDemo(box, def) : null;
   });
   function syncDemos(){
+    if(stageVisible) playFeed(); else pauseFeed();
     demos.forEach(function(d, i){ if(!d) return; if(i === active && stageVisible) d.start(); else d.stop(); });
   }
   if('IntersectionObserver' in window){
+    // el feed se descarga cuando el showroom se acerca al viewport, y corre sólo mientras se ve
+    new IntersectionObserver(function(en){ if(en[0].isIntersecting){ loadFeed(); } }, { rootMargin:'900px 0px' }).observe(stage);
     new IntersectionObserver(function(en){ stageVisible = en[0].isIntersecting; syncDemos(); }, { threshold:.05 }).observe(stage);
-  }
+  } else { loadFeed(); }
   document.addEventListener('visibilitychange', function(){ stageVisible = !document.hidden; syncDemos(); });
-
   layout(false);
 })();
 </script>
