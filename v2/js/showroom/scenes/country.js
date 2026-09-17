@@ -1,53 +1,89 @@
 /* =====================================================================
    Escena 2 — Barrios cerrados y countries
+   Identidad: barrio residencial cálido — terracota, cremas, mucho verde,
+   piletas, plaza con laguna, gente paseando al perro, palmeras al sol.
    ===================================================================== */
 import { S, path, strobe, wait, done, tagHTML } from './common.js';
 
 export default {
   id: 'country',
-  camera: { pos: [48, 30, 62], target: [0, 1, 4], maxDistance: 140 },
+  camera: { pos: [50, 30, 66], target: [0, 1, 6], maxDistance: 150 },
   glb: null,
   build(ctx) {
     const { lib: L, add, THREE } = ctx;
-    add(L.ground(220, '#86B56F'));
-    // Perímetro
+    add(L.ground(280, '#8CBB70', { color2: '#6E9F55', amount: 0.24, scale: 0.045 }));
     const F = 42, Fz = 32;
+
+    /* ---- Perímetro: cerco + seto interior + pinos exteriores ---- */
     add(L.fence(-F, -Fz, F, -Fz, 2.4), L.fence(-F, Fz, -6, Fz, 2.4), L.fence(6, Fz, F, Fz, 2.4), L.fence(-F, -Fz, -F, Fz, 2.4), L.fence(F, -Fz, F, Fz, 2.4));
-    // Calles
-    add(L.road(8, 84, 0, 8), L.road(8, 70, 0, -8, Math.PI / 2), L.road(8, 70, 0, 20, Math.PI / 2));
-    // Plaza central
-    add(L.plane(14, 10, '#9CC98A', 0, 0.03, 6)); add(L.tree(-4, 5, 1.3), L.tree(4, 7, 1.1), L.bush(2, 3), L.bush(-3, 8.5));
-    // Casas
-    const houses = [[-22, -22], [-8, -22], [10, -22], [24, -22], [-22, 0], [22, 0], [-22, 32 - 22], [-8, 32 - 22 + 4], [12, 30 - 22 + 6], [24, 32 - 22]];
-    houses.forEach(([x, z], i) => { add(L.house(x, z, 9 + (i % 3), 8 + (i % 2) * 2, ['#EFE7D8', '#E8DCC8', '#F1EDE4'][i % 3], ['#9B5B3C', '#7A5A4A', '#8A6A5A'][i % 3], z < 0 ? 0 : Math.PI)); add(L.tree(x + 6, z + (z < 0 ? 5 : -5), 1 + (i % 2) * 0.3)); });
-    for (let x = -38; x <= 38; x += 9) { add(L.tree(x, -29, 1.1)); add(L.tree(x, 29.5, 1.0)); }
-    // Luminarias
-    [[-14, 12, Math.PI / 2], [14, 12, -Math.PI / 2], [-14, -4, Math.PI / 2], [14, -4, -Math.PI / 2], [-30, 24, 0], [30, 24, Math.PI]].forEach(([x, z, r]) => add(L.lampPost(ctx, x, z, 5, r)));
-    // Pórtico de acceso (sur): garita, barrera, ANPR, intercom
+    add(L.hedge(2 * F - 4, 0, -Fz + 1.2, Math.PI / 2, 1.3), L.hedge(2 * Fz - 4, -F + 1.2, 0, 0, 1.3), L.hedge(2 * Fz - 4, F - 1.2, 0, 0, 1.3));
+    for (let x = -60; x <= 60; x += 11) { add(L.pine(x, -50, 1.8 + (Math.abs(x) % 4) * 0.25)); add(L.tree(x + 5, 52, 1.5)); }
+    for (let z = -40; z <= 40; z += 12) { add(L.pine(-62, z, 2)); add(L.pine(62, z + 6, 1.9)); }
+    // Lomas suaves en el horizonte
+    [[-120, -120, 90], [110, -130, 110], [140, 60, 80], [-140, 90, 100]].forEach(([x, z, r]) => { const h = L.sph(r, '#7FAE63', x, -r * 0.82, z, { flat: false, seg: 14 }); h.castShadow = false; add(h); });
+
+    /* ---- Calles internas con cordones y veredas ---- */
+    add(L.road(8, 84, 0, 8, 0, '#4A4E57'), L.road(8, 70, 0, -8, Math.PI / 2, '#4A4E57'), L.road(8, 70, 0, 20, Math.PI / 2, '#4A4E57'));
+    add(L.curb(84, -4.3, 8, 0), L.curb(84, 4.3, 8, 0), L.curb(70, 0, -12.3, Math.PI / 2), L.curb(70, 0, -3.7, Math.PI / 2), L.curb(70, 0, 15.7, Math.PI / 2), L.curb(70, 0, 24.3, Math.PI / 2));
+    add(L.zebra(8, 0, -16, 0), L.zebra(8, 0, 28, 0));
+    [[-14, 12, Math.PI / 2], [14, 12, -Math.PI / 2], [-14, -4, Math.PI / 2], [14, -4, -Math.PI / 2], [-30, 24, 0], [30, 24, Math.PI], [-30, -12, 0], [30, -12, Math.PI]].forEach(([x, z, r]) => add(L.lampPost(ctx, x, z, 5, r)));
+
+    /* ---- Plaza central: laguna, bancos, juegos, canteros ---- */
+    add(L.plane(16, 12, '#9CCB88', 0, 0.03, 6)); add(L.pond(3.2, 2.2, -3, 5));
+    add(L.tree(4.5, 3, 1.3), L.palm(5, 9.5, 1.1), L.bush(2, 3), L.bush(-6.5, 8.8), L.flowerbed(2.4, 1.2, 4, 11.2), L.bench(1, 9.6, 0), L.bench(-6.5, 3, Math.PI / 2), L.bin(6.8, 9.6));
+    add(L.rbox(0.3, 1.8, 0.3, '#FFB703', 3, 0, 6.2, { r: 0.05 }), L.rbox(0.3, 1.8, 0.3, '#FFB703', 5, 0, 6.2, { r: 0.05 }), L.box(2.4, 0.1, 0.1, '#E2231A', 4, 1.8, 6.2)); // hamacas
+    const slide = L.box(0.5, 0.1, 2.4, '#3A6BD8', 6.5, 0, 4.2); slide.rotation.x = -0.5; slide.position.y = 0.6; add(slide, L.rbox(0.6, 1.2, 0.6, '#FFB703', 6.5, 0, 3.2, { r: 0.05 }));
+
+    /* ---- Casas con jardines, piletas, autos en entradas ---- */
+    const houses = [[-22, -22], [-8, -22], [10, -22], [24, -22], [-22, 0], [22, 0], [-22, 10], [-8, 14], [12, 14], [24, 10]];
+    const pal = [['#F1E6D2', '#9B5B3C'], ['#E8DCC8', '#7A5A4A'], ['#F4EFE6', '#B3573E'], ['#EADFCF', '#8A6A5A'], ['#F3EAD9', '#A0522D']];
+    houses.forEach(([x, z], i) => {
+      const [wc, rc] = pal[i % pal.length]; const front = z < 0 ? 0 : Math.PI;
+      add(L.house(x, z, 9 + (i % 3), 8 + (i % 2) * 2, wc, rc, front));
+      const dzF = z < 0 ? 6.5 : -6.5; // frente → calle
+      add(L.plane(3.2, 5, '#CFCAC0', x + 3.5, 0.03, z + dzF * 0.75)); // entrada de auto
+      if (i % 2 === 0) { const c = add(L.car(L.pick(['#DDDDDD', '#2B2F3A', '#B8362E', '#3A6BD8', '#F5B400']))); c.position.set(x + 3.5, 0, z + dzF * 0.75); c.rotation.y = Math.PI / 2; }
+      add(L.tree(x + 6, z - dzF * 0.9, 1 + (i % 2) * 0.3), L.bush(x - 4.5, z + dzF * 0.7, 0.9), L.flowerbed(2, 1, x - 2.5, z + dzF * 0.72));
+      if (i % 3 === 1) { add(L.pond(2.4, 1.4, x - 1, z - dzF * 0.95)); add(L.palm(x + 3, z - dzF * 1.1, 0.9), L.umbrella(x - 3.5, z - dzF * 0.95, L.pick(['#E2231A', '#344AB2', '#FFB703']))); }
+      add(L.hedge(8, x + 6.3, z, 0, 0.8));
+    });
+
+    /* ---- Pórtico de acceso (sur): garita, barrera, ANPR, intercom, banderas ---- */
     add(L.guardBooth(6.5, 34.5, Math.PI)); add(L.wall(-6, 31.8, -6, 37, 2.6, '#E1DDD5'), L.wall(6, 31.8, 6, 37, 2.6, '#E1DDD5'));
-    add(L.box(14, 0.5, 5.5, '#B9B5AD', 0, 5.2, 34.4)); add(L.cyl(0.25, 0.3, 5.2, '#B9B5AD', -6.5, 0, 36.8), L.cyl(0.25, 0.3, 5.2, '#B9B5AD', 6.5, 0, 36.8));
+    add(L.rbox(14, 0.5, 5.5, '#B9B5AD', 0, 5.2, 34.4, { r: 0.06 }), L.cyl(0.25, 0.3, 5.2, '#B9B5AD', -6.5, 0, 36.8), L.cyl(0.25, 0.3, 5.2, '#B9B5AD', 6.5, 0, 36.8));
+    add(L.rbox(5, 0.9, 0.2, '#344AB2', 0, 5.75, 37.2, { r: 0.05 }), L.box(3, 0.24, 0.05, '#FFFFFF', 0, 6.1, 37.32));
     const barrier = add(L.barrier(-3.6, 34, 0, 7)); const arm = barrier.getObjectByName('arm');
     const lpr = add(L.mount(-5.6, 4.6, 36.9, L.camBullet(), 0, -0.3));
     const intercom = add(L.totem(5.2, 32.2, Math.PI)); add(L.mount(6.6, 4.6, 36.9, L.camTurret(), -Math.PI * 0.85, -0.45));
-    // TandemVu + radar en esquina NO
+    add(L.flag(ctx, -8, 38.5, ['#344AB2', '#FFFFFF'], 6), L.flag(ctx, 8, 38.5, ['#FFB703', '#FFFFFF'], 6), L.planter(-7.2, 33), L.planter(7.6, 36.5), L.bollard(-1, 38.5), L.bollard(1, 38.5));
+    add(L.road(8, 30, -2, 47, 0, '#4A4E57'), L.curb(30, -6.3, 47, 0), L.curb(30, 2.3, 47, 0), L.sidewalk(3, 30, 4, 47, 0));
+
+    /* ---- Dispositivos perimetrales ---- */
     add(L.pole(-38, -28, 6)); const tandem = add(L.mount(-38, 6.1, -28, L.camPTZ('#F4F5F7', 0.34), 0, 0)); const tHead = tandem.getObjectByName('head'); const tStrobe = tandem.getObjectByName('strobe');
     const tLight = L.spot('#FFFFFF', 0, 0.35, 60); tLight.position.set(-38, 6, -28); add(tLight, tLight.target); tLight.target.position.set(-20, 0.5, -34);
     const radar = add(L.radar(-28, -28.5, 3.6)); const sweep = radar.getObjectByName('sweep'), beam = radar.getObjectByName('beam');
-    // HeatPro en cerco norte + línea virtual
     add(L.pole(12, -30.5, 4)); const heat = add(L.mount(12, 4.1, -30.5, L.camThermal(), -Math.PI / 2, -0.28));
     const vline = add(L.zone(28, 0.25, -4, -31.2, '#FF3B30', 0.55)); vline.visible = false;
-    // PanoVu en plaza + cámara disuasiva en casa
     add(L.pole(0, 1.5, 6.5)); const pano = add(L.mount(0, 6.6, 1.5, L.camTurret('#F4F5F7'), 0, -0.9)); pano.scale.setScalar(1.6);
-    const deter = add(L.mount(22 - 6, 3.3, 5.2, L.camBullet(), Math.PI, -0.4)); const dStrobe = L.siren(22 - 5.4, 3.3, 5.2); add(dStrobe);
-    // Actores
-    const car = add(L.car('#2B2F3A', 'AD 456 FG')); car.position.set(-3.6 + 1.6, 0, 52); car.rotation.y = Math.PI / 2;
-    const car2 = add(L.car('#B8362E')); car2.position.set(-2, 0, 60); car2.rotation.y = Math.PI / 2;
+    const deter = add(L.mount(16, 3.3, 5.2, L.camBullet(), Math.PI, -0.4)); const dStrobe = L.siren(16.6, 3.3, 5.2); add(dStrobe);
+
+    /* ---- Actores ---- */
+    const car = add(L.car('#2B2F3A', 'AD 456 FG')); car.position.set(-2, 0, 52); car.rotation.y = Math.PI / 2;
     const intruder = add(L.person('#2B2F3A', '#1A1C24')); intruder.visible = false;
     const walker = add(L.person('#5B7A2B', '#2B2F3A')); walker.visible = false;
     const dog = add(L.dog()); dog.visible = false;
-    const guest = add(L.person('#D19A3A', '#2B2F3A')); guest.position.set(8, 0, 31); guest.visible = false;
+    const guest = add(L.person('#D19A3A', '#2B2F3A')); guest.visible = false;
     const resident = add(L.person('#3A6BD8')); resident.position.set(-10, 0, 12);
-    add(L.car('#DDDDDD')).position.set(20, 0, -14);
+
+    /* ---- Vida ambiente ---- */
+    L.loopPath(ctx, add(L.car('#F1F1F1')), [[-30, 6], [30, 6], [30, 22], [-30, 22]], { speed: 6 });
+    L.loopPath(ctx, add(L.car('#3A6BD8')), [[-2, 44], [-2, -10], [-30, -10], [-30, 10], [-2, 10]], { speed: 5 });
+    const stroller = add(L.person('#EE6FA5', '#2B2F3A')); L.loopPath(ctx, stroller, [[-3, 14.6], [14, 14.6], [14, 26], [-3, 26]], { speed: 1.4, bob: true });
+    const pet = add(L.dog()); L.loopPath(ctx, pet, [[-1.5, 15.4], [15.5, 15.4], [15.5, 25.2], [-1.5, 25.2]], { speed: 1.4 });
+    const jogger = add(L.person('#FFB703', '#1A1C24')); L.loopPath(ctx, jogger, [[-20, -14.6], [20, -14.6], [20, -2], [-20, -2]], { speed: 3.2, bob: true });
+    const kid = add(L.person('#E2231A', '#3A6BD8')); kid.scale.setScalar(0.7); kid.position.set(4, 0, 7.4); L.idle(ctx, kid, 0.12);
+    const reader = add(L.person('#6B6464', '#2B2F3A')); reader.position.set(1, 0, 9.0); L.idle(ctx, reader);
+    add(L.birds(ctx, 0, 0, 60, 32, 7));
 
     let tracking = null; let sweepAngle = 0;
     ctx.tick((dt) => {

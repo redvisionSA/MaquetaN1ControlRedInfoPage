@@ -11,15 +11,19 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeLib } from './lib.js';
 
 const gsap = window.gsap;
 
-const SKY_DAY = new THREE.Color('#BFD9F5');
-const SKY_NIGHT = new THREE.Color('#060A18');
-const FOG_DAY = new THREE.Color('#C9DEF3');
-const FOG_NIGHT = new THREE.Color('#070B1A');
-const SUN_DAY = new THREE.Color('#FFF4E0');
+const SKY_DAY = new THREE.Color('#6FA8E8');      // cenit
+const HOR_DAY = new THREE.Color('#DCEBF8');      // horizonte
+const SKY_NIGHT = new THREE.Color('#050815');
+const HOR_NIGHT = new THREE.Color('#141B45');
+const FOG_DAY = new THREE.Color('#D3E4F5');
+const FOG_NIGHT = new THREE.Color('#0A0F24');
+const SUN_DAY = new THREE.Color('#FFF1D6');
 const SUN_NIGHT = new THREE.Color('#5C74C8');
 
 /* Paleta Ironbow para el modo térmico */
@@ -38,11 +42,11 @@ export class ShowroomViewer {
     this.ticks = [];       // callbacks por frame del mapa actual
     this.tweens = [];      // tweens gsap a matar al cambiar de mapa
     this.night = 0;
-    this.feed = { active: false, mode: 'color', camera: new THREE.PerspectiveCamera(50, 16 / 9, 0.2, 300), split: 0.5, follow: null };
+    this.feed = { active: false, mode: 'color', camera: new THREE.PerspectiveCamera(50, 16 / 9, 0.2, 1500), split: 0.5, follow: null };
     this.clock = new THREE.Clock();
     this._tmp = new THREE.Vector3();
     this.initCore(); this.initLoaders();
-    this.lib = makeLib(THREE);
+    this.lib = makeLib(THREE, RoundedBoxGeometry);
     this.animate = this.animate.bind(this);
     requestAnimationFrame(this.animate);
   }
@@ -50,20 +54,20 @@ export class ShowroomViewer {
   initCore() {
     const w = this.container.clientWidth, h = this.container.clientHeight;
     this.scene = new THREE.Scene();
-    this.scene.background = SKY_DAY.clone();
-    this.scene.fog = new THREE.Fog(FOG_DAY.clone(), 60, 190);
+    this.scene.background = null;
+    this.scene.fog = new THREE.Fog(FOG_DAY.clone(), 130, 430);
 
-    this.camera = new THREE.PerspectiveCamera(42, w / h, 0.3, 600);
+    this.camera = new THREE.PerspectiveCamera(42, w / h, 0.3, 1500);
     this.camera.position.set(38, 26, 38);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setSize(w, h);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    this.renderer.setSize(w, h); this.renderer.setClearColor(HOR_DAY, 1);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.container.prepend(this.renderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -72,12 +76,13 @@ export class ShowroomViewer {
     this.controls.minDistance = 3; this.controls.maxDistance = 110;
     this.controls.enablePan = true; this.controls.screenSpacePanning = false;
 
-    this.hemi = new THREE.HemisphereLight('#DCEBFF', '#6E7A5A', 0.75);
+    this.initSky();
+    this.hemi = new THREE.HemisphereLight('#CFE3FF', '#8C9A6A', 0.7);
     this.scene.add(this.hemi);
     this.ambient = new THREE.AmbientLight('#FFFFFF', 0.18);
     this.scene.add(this.ambient);
     this.sun = new THREE.DirectionalLight(SUN_DAY.clone(), 2.4);
-    this.sun.position.set(40, 60, 25);
+    this.sun.position.set(48, 56, 30);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     Object.assign(this.sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 5, far: 200 });
@@ -86,6 +91,29 @@ export class ShowroomViewer {
 
     this.world = new THREE.Group(); this.scene.add(this.world);
     this.ro = new ResizeObserver(() => this.onResize()); this.ro.observe(this.container);
+  }
+
+  /* Cielo: domo con gradiente, estrellas, environment PMREM y nubes */
+  initSky() {
+    const skyMat = new THREE.ShaderMaterial({
+      uniforms: { top: { value: SKY_DAY.clone() }, horizon: { value: HOR_DAY.clone() } },
+      vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform vec3 top; uniform vec3 horizon; varying vec3 vP; void main(){ float h = normalize(vP).y; float t = smoothstep(-0.04, 0.55, h); gl_FragColor = vec4(mix(horizon, top, t), 1.0); }',
+      side: THREE.BackSide, depthWrite: false, fog: false,
+    });
+    this.sky = new THREE.Mesh(new THREE.SphereGeometry(520, 32, 16), skyMat); this.sky.userData.noSwap = true; this.scene.add(this.sky);
+    // Estrellas (solo de noche)
+    const n = 900, pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { const u = Math.random(), v = Math.random(); const th = 2 * Math.PI * u, ph = Math.acos(1 - v) * 0.55; pos[i * 3] = 500 * Math.sin(ph) * Math.cos(th); pos[i * 3 + 1] = 500 * Math.cos(ph); pos[i * 3 + 2] = 500 * Math.sin(ph) * Math.sin(th); }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    this.stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: '#FFFFFF', size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false })); this.scene.add(this.stars);
+    // Environment map desde el mismo domo (reflejos suaves en vidrios y carrocerías)
+    const pm = new THREE.PMREMGenerator(this.renderer); const envScene = new THREE.Scene(); envScene.add(this.sky.clone());
+    const sunBall = new THREE.Mesh(new THREE.SphereGeometry(30, 12, 8), new THREE.MeshBasicMaterial({ color: '#FFF6E0' })); sunBall.position.set(200, 260, 120); envScene.add(sunBall);
+    this.scene.environment = pm.fromScene(envScene, 0.03, 1, 1200).texture; this.scene.environmentIntensity = 0.55; pm.dispose();
+    // Nubes
+    this.clouds = new THREE.Group(); this.scene.add(this.clouds);
+    this._cloudInit = () => { if (this.clouds.children.length) return; for (let i = 0; i < 12; i++) { const c = this.lib.cloud((Math.random() - 0.5) * 340, 42 + Math.random() * 22, (Math.random() - 0.5) * 340, 1.6 + Math.random() * 2.2); c.userData.speed = 0.6 + Math.random() * 0.8; this.clouds.add(c); } };
   }
 
   initLoaders() {
@@ -131,6 +159,9 @@ export class ShowroomViewer {
       built = mod.build(ctx);
     }
     this.built = built;
+    built.hotspots?.forEach(h => { if (h.target?.isObject3D) h.target.userData.dynamic = true; });
+    this.mergeStatic();
+    this._cloudInit(); this.clouds.visible = mod.clouds !== false;
     this.collectMeshes();
     this.setNight(mod.startNight ?? 0, 0);
     const c = mod.camera;
@@ -154,6 +185,32 @@ export class ShowroomViewer {
       }
     });
     this.world.clear(); this.meshes = []; this.built = null;
+  }
+
+  /* Une toda la geometría estática que comparte material en una sola malla:
+     baja los draw calls de ~800 a ~150 sin tocar actores ni dispositivos
+     (marcados con userData.dynamic por lib.js o por la escena). */
+  mergeStatic() {
+    this.world.updateMatrixWorld(true);
+    const groups = new Map(); const skip = new Set();
+    const isDyn = (o) => { for (let p = o; p && p !== this.world; p = p.parent) if (p.userData.dynamic) return true; return false; };
+    this.world.traverse(o => {
+      if (!o.isMesh || o.isPoints || o.isLine) return;
+      const m = o.material;
+      if (Array.isArray(m) || !m.isMeshStandardMaterial || m.transparent || m.vertexColors || o.userData.noSwap || o.userData.lampMesh || o.userData.heat > 0.3 || o.userData.noMerge || isDyn(o)) return;
+      const g = o.geometry; if (!g.index || !g.attributes.normal || !g.attributes.uv) return;
+      if (!groups.has(m)) groups.set(m, []); groups.get(m).push(o);
+    });
+    let merged = 0;
+    for (const [m, list] of groups) {
+      if (list.length < 2) continue;
+      const geos = list.map(o => o.geometry.clone().applyMatrix4(o.matrixWorld));
+      geos.forEach(g => { for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k); });
+      const mg = mergeGeometries(geos, false); geos.forEach(g => g.dispose()); if (!mg) continue;
+      const mesh = new THREE.Mesh(mg, m); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.merged = true; this.world.add(mesh);
+      list.forEach(o => o.parent?.remove(o)); merged += list.length;
+    }
+    this._mergedCount = merged;
   }
 
   collectMeshes() {
@@ -187,11 +244,15 @@ export class ShowroomViewer {
       v.sun.color.copy(SUN_DAY).lerp(SUN_NIGHT, n);
       v.hemi.intensity = THREE.MathUtils.lerp(0.75, 0.06, n);
       v.ambient.intensity = THREE.MathUtils.lerp(0.18, 0.05, n);
-      v.scene.background.copy(SKY_DAY).lerp(SKY_NIGHT, n);
+      v.sky.material.uniforms.top.value.copy(SKY_DAY).lerp(SKY_NIGHT, n);
+      v.sky.material.uniforms.horizon.value.copy(HOR_DAY).lerp(HOR_NIGHT, n);
+      v.stars.material.opacity = THREE.MathUtils.smoothstep(n, 0.5, 1) * 0.9;
+      v.scene.environmentIntensity = THREE.MathUtils.lerp(0.55, 0.06, n);
+      v.clouds.children.forEach(c => c.children.forEach(m => { m.material = v.lib.mat(n > 0.5 ? '#2C3560' : '#FFFFFF', { flat: false }); }));
       v.scene.fog.color.copy(FOG_DAY).lerp(FOG_NIGHT, n);
       v.renderer.toneMappingExposure = THREE.MathUtils.lerp(1.05, 0.9, n);
       const lampOn = THREE.MathUtils.smoothstep(n, 0.35, 0.75);
-      v.lamps.forEach(l => { l.light.intensity = l.intensity * lampOn * (l.dim ?? 1); if (l.mesh) l.mesh.material.emissiveIntensity = 1.8 * lampOn * (l.dim ?? 1); });
+      v.lamps.forEach(l => { l.light.intensity = l.intensity * lampOn * (l.dim ?? 1); l.light.visible = l.light.intensity > 0.01; if (l.mesh) l.mesh.material.emissiveIntensity = 1.8 * lampOn * (l.dim ?? 1); });
       v.world.traverse(o => { if (o.userData.lampMesh) o.material.emissiveIntensity = 1.6 * lampOn * (typeof o.userData.lampMesh === 'number' ? o.userData.lampMesh : 1); });
     };
     if (dur === 0) { v.night = val; apply(); return; }
@@ -265,7 +326,7 @@ export class ShowroomViewer {
     const r = this.renderer; r.setScissorTest(true);
     const draw = (key, x0, w0) => {
       r.setViewport(x, y, w, h); r.setScissor(x0, y, w0, h);
-      const fog = this.scene.fog; const bg = this.scene.background;
+      const fog = this.scene.fog; const bg = this.scene.background; const skyVis = key === 'color'; this.sky.visible = skyVis; this.clouds.visible = skyVis && this.sceneMod?.clouds !== false; this.stars.visible = skyVis;
       if (key === 'ir') { this.scene.background = new THREE.Color('#0B0B0B'); this.scene.fog = null; }
       if (key === 'cv') { this.scene.background = new THREE.Color('#1B2340'); this.scene.fog = null; }
       if (key === 'th') { this.scene.background = IRONBOW[0]; this.scene.fog = null; }
@@ -273,7 +334,7 @@ export class ShowroomViewer {
       const shadows = r.shadowMap.enabled; if (key !== 'color') r.shadowMap.enabled = false;
       r.render(this.scene, cam);
       r.shadowMap.enabled = shadows;
-      this.swapMaterials(null); this.scene.background = bg; this.scene.fog = fog;
+      this.swapMaterials(null); this.scene.background = bg; this.scene.fog = fog; this.sky.visible = true; this.stars.visible = true; this.clouds.visible = this.sceneMod?.clouds !== false;
     };
     if (f.mode === 'split') { const sx = Math.round(w * f.split); draw('ir', x, sx); draw('cv', x + sx, w - sx); }
     else draw((f.mode === 'zoom' || f.mode === 'dash') ? 'color' : f.mode, x, w);
@@ -286,6 +347,7 @@ export class ShowroomViewer {
     const dt = Math.min(this.clock.getDelta(), 0.05); const t = this.clock.elapsedTime;
     this.controls.update();
     for (const fn of this.ticks) fn(dt, t);
+    for (const c of this.clouds.children) { c.position.x += dt * c.userData.speed; if (c.position.x > 180) c.position.x = -180; }
     this.project();
     this.renderer.render(this.scene, this.camera);
     this.renderFeed();

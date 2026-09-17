@@ -1,50 +1,78 @@
 /* =====================================================================
    Escena 4 — Agro, campos y parcelas remotas
+   Identidad: campo argentino — lotes dorados y verdes, casco con galpón
+   y molino, tanque australiano, vacas, rollos, tractor trabajando,
+   pájaros y horizonte con arboledas.
    ===================================================================== */
 import { S, path, strobe, wait, done, tagHTML } from './common.js';
 
 export default {
   id: 'agro',
-  camera: { pos: [52, 30, 58], target: [4, 1, -2], maxDistance: 160 },
+  camera: { pos: [56, 32, 62], target: [2, 1, -4], maxDistance: 170 },
   glb: null,
   build(ctx) {
     const { lib: L, add, THREE } = ctx;
-    add(L.ground(320, '#A9B86A'));
-    // Parcelas cultivadas (franjas)
-    for (let i = 0; i < 9; i++) add(L.plane(70, 3.2, i % 2 ? '#8FA84E' : '#B7C36E', 30, 0.02, -50 + i * 4.4));
-    for (let i = 0; i < 7; i++) add(L.plane(3.2, 60, i % 2 ? '#7E9C45' : '#A7B85F', -60 + i * 4.4, 0.02, 20));
-    // Camino de tierra y tranquera al este
-    add(L.road(6, 150, 10, 0, Math.PI / 2, '#B08D5E'));
-    add(L.fence(85, -60, 85, -4, 1.4, '#7A5A3A'), L.fence(85, 4, 85, 60, 1.4, '#7A5A3A'));
-    const gate = add(L.fence(85, -4, 85, 4, 1.4, '#A88650'));
-    // Casco: casa + galpón de maquinaria + tanque
-    add(L.house(-34, -22, 11, 9, '#F1EDE4', '#7A5A4A', Math.PI / 2)); add(L.warehouse(18, 6, 12, -34, -2, '#C9C3B4', '#7A5A3A'));
-    add(L.cyl(1.4, 1.4, 5, '#8A8F9C', -22, 0, -24, 10), L.cyl(1.7, 1.7, 1.6, '#B4B9C2', -22, 5, -24, 10)); // tanque de agua
-    add(L.box(3, 1.2, 1.6, '#3A6BD8', -30, 0, 2.5)); add(L.box(2.4, 1.4, 1.2, '#F5B400', -26, 0, 3)); // maquinaria
-    [[-46, -30], [-46, -12], [-40, 10], [-28, 12], [-14, -30]].forEach(([x, z]) => add(L.tree(x, z, 1.6, '#4F8A3D')));
-    for (let x = -80; x <= 80; x += 14) add(L.pine(x, -95, 2.2)); for (let z = -80; z <= 80; z += 14) add(L.pine(-110, z, 2.2));
-    // Silobolsas
+    add(L.ground(360, '#B2BE6E', { color2: '#8FA34F', amount: 0.28, scale: 0.035 }));
+
+    /* ---- Lotes cultivados (franjas con colores de distintos cultivos) ---- */
+    const crops = ['#8FA84E', '#BFCB6E', '#D9B65A', '#7E9C45', '#C9A64F'];
+    for (let i = 0; i < 11; i++) add(L.plane(74, 3.4, crops[i % 2 ? 0 : 1], 32, 0.02, -56 + i * 4.6));
+    for (let i = 0; i < 9; i++) add(L.plane(3.4, 64, crops[i % 2 ? 3 : 2], -68 + i * 4.6, 0.02, 22));
+    for (let i = 0; i < 8; i++) add(L.plane(60, 3.4, crops[i % 2 ? 4 : 1], 36, 0.02, 34 + i * 4.6));
+    // Lomas y arboledas en el horizonte
+    [[-160, -150, 110], [140, -170, 130], [180, 80, 100], [-180, 120, 120]].forEach(([x, z, r]) => { const h = L.sph(r, '#8FB06A', x, -r * 0.84, z, { flat: false, seg: 14 }); h.castShadow = false; add(h); });
+    for (let x = -100; x <= 100; x += 12) add(L.pine(x, -110, 2.4 + (Math.abs(x) % 3) * 0.4)); for (let z = -100; z <= 100; z += 12) add(L.pine(-125, z, 2.4));
+    for (let x = -90; x <= 90; x += 16) add(L.tree(x + 4, 96, 2.0));
+
+    /* ---- Camino de tierra, tranquera, alambrado ---- */
+    add(L.road(6, 190, 10, 0, Math.PI / 2, '#B08D5E', { dashed: false, edge: false })); add(L.road(5, 60, -30, -20, 0, '#B08D5E', { dashed: false, edge: false }));
+    add(L.fence(85, -80, 85, -4, 1.4, '#7A5A3A', { mesh: false }), L.fence(85, 4, 85, 80, 1.4, '#7A5A3A', { mesh: false }));
+    const gate = add(L.fence(85, -4, 85, 4, 1.4, '#A88650', { mesh: false })); gate.userData.dynamic = true; add(L.sign(87, -6, -Math.PI / 2, '#6B6464'));
+    add(L.fence(-70, 40, 70, 40, 1.3, '#7A5A3A', { mesh: false }));
+    for (let i = 0; i < 12; i++) add(L.rock(L.rnd(-60, 80), L.rnd(-50, 30), L.rnd(0.6, 1.6)));
+
+    /* ---- Casco: casa con galería, galpón, molino, tanque australiano ---- */
+    add(L.house(-34, -22, 11, 9, '#F3EDE0', '#7A5A4A', Math.PI / 2)); add(L.plane(14, 12, '#CBB89A', -34, 0.025, -10));
+    add(L.warehouse(18, 6, 12, -34, -2, '#C9C3B4', '#7A5A3A')); add(L.rbox(4.5, 4.5, 0.2, '#1B2030', -34, 0, 4.1, { r: 0.05 })); // portón abierto
+    add(L.tractor('#E2231A')).position.set(-30, 0, 2.5); add(L.rbox(2.4, 1.4, 1.2, '#F5B400', -26, 0, 3, { r: 0.1 }), L.crateStack(-40, 5, 3), L.hayBale(-38, 8), L.hayBale(-40.5, 8.2));
+    add(L.waterTank(-22, -26)); add(L.windmill(ctx, -16, -28, 9)); add(L.cyl(1.2, 1.2, 4.5, '#8A8F9C', -22, 0, -34, 10), L.cyl(1.4, 1.4, 1.4, '#B4B9C2', -22, 4.5, -34, 10));
+    add(L.flag(ctx, -42, -14, ['#75AADB', '#FFFFFF'], 7)); add(L.bench(-30, -16, Math.PI), L.umbrella(-27, -16, '#E2231A'), L.flowerbed(3, 1.4, -38, -16), L.dog()).position.set(-28, 0, -13);
+    [[-46, -30], [-46, -12], [-40, 10], [-28, 12], [-14, -30], [-48, 2], [-20, 14]].forEach(([x, z]) => add(L.tree(x, z, 1.7)));
+    add(L.palm(-24, -8, 1.2), L.palm(-44, -6, 1.0));
+
+    /* ---- Potrero con vacas, rollos y bebedero ---- */
+    add(L.fence(-70, 44, -70, 90, 1.3, '#7A5A3A', { mesh: false }), L.fence(-70, 90, 0, 90, 1.3, '#7A5A3A', { mesh: false }), L.fence(0, 44, 0, 90, 1.3, '#7A5A3A', { mesh: false }));
+    add(L.plane(70, 46, '#9DB562', -35, 0.02, 67));
+    for (let i = 0; i < 8; i++) add(L.cow(L.rnd(-62, -8), L.rnd(50, 84), L.rnd(0, 6.28)));
+    add(L.pond(3.5, 2.5, -20, 70), L.hayBale(-56, 52), L.hayBale(-53.5, 52.3), L.hayBale(-51, 52), L.hayBale(-54, 53.8), L.tree(-60, 80, 2.2), L.tree(-12, 86, 1.8));
+
+    /* ---- Silobolsas + línea virtual ---- */
     const silos = [[22, 16, 0], [22, 22, 0], [22, 28, 0]].map(([x, z, r]) => add(L.silobolsa(x, z, 16, r)));
+    add(L.plane(26, 20, '#B9A981', 22, 0.02, 22));
     const zone = add(L.zone(26, 0.3, 22, 11.5, '#FF3B30', 0.6)); zone.visible = false;
-    // Cámara solar 4G junto a silobolsas
+
+    /* ---- Dispositivos ---- */
     const solar = add(L.camSolar(8, 12, 4.6, Math.PI * 0.75)); const panel = solar.getObjectByName('panel'); const solarCam = solar.getObjectByName('cam');
     const sStrobe = L.siren(0, 3.5, 0.32); solar.add(sStrobe); const sLight = L.spot('#FFFFFF', 0, 0.5, 30); sLight.position.set(8, 4.2, 12); add(sLight, sLight.target); sLight.target.position.set(22, 0.5, 8);
-    // PTZ DarkFighterX en mástil del casco + PTZ térmica en torre
     add(L.pole(-24, -8, 9)); const ptz = add(L.mount(-24, 9.1, -8, L.camPTZ('#F4F5F7', 0.36), 0, 0));
     add(L.cyl(0.4, 0.6, 12, '#8A8F9C', -40, 0, -34, 6), L.box(1.2, 0.2, 1.2, '#8A8F9C', -40, 12, -34)); const tptz = add(L.mount(-40, 12.3, -34, L.camPTZ('#F4F5F7', 0.34), 0, 0));
     const radar = add(L.radar(4, -22, 4)); const sweep = radar.getObjectByName('sweep'), beam = radar.getObjectByName('beam');
-    // Enlace inalámbrico: antenas en galpón y casa
-    const dish = (x, y, z, r) => { const d = L.box(0.6, 0.6, 0.08, '#F4F5F7', x, y, z); d.rotation.y = r; return d; };
+    const dish = (x, y, z, r) => { const d = L.rbox(0.6, 0.6, 0.08, '#F4F5F7', x, y, z, { r: 0.04 }); d.rotation.y = r; return d; };
     const link1 = add(dish(-26, 6.4, -2, Math.PI / 2)); add(dish(-40, 5.4, -22, -Math.PI / 2)); add(L.cyl(0.05, 0.05, 1.2, '#4A4F66', -26, 6, -2, 6), L.cyl(0.05, 0.05, 1.2, '#4A4F66', -40, 5, -22, 6));
-    // Foco de incendio lejano (humo + fuego) y sol
     const smoke = add(L.smoke(70, -78, 8)); const fire = add(L.fire(70, -78));
     const sunBall = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 12), new THREE.MeshBasicMaterial({ color: '#FFE9A8', fog: false })); sunBall.userData.noSwap = true; sunBall.position.set(60, 70, -40); add(sunBall);
     add(L.lampPost(ctx, -30, -12, 5, Math.PI / 2));
-    // Actores
+
+    /* ---- Actores ---- */
     const pickup = add(L.car('#2B2F3A', 'AC 321 KL')); pickup.position.set(10, 0, 50); pickup.rotation.y = Math.PI / 2; pickup.visible = false;
-    const tractor = add(L.forklift('#3E7A3A')); tractor.position.set(30, 0, -30); tractor.rotation.y = Math.PI;
-    const farmer = add(L.person('#7A5A3A', '#2B2F3A')); farmer.position.set(-28, 0, 5);
+    const farmer = add(L.person('#7A5A3A', '#2B2F3A')); farmer.position.set(-28, 0, 5); L.idle(ctx, farmer);
     const intruder = add(L.person('#2B2F3A', '#1A1C24')); intruder.visible = false;
+
+    /* ---- Vida ambiente ---- */
+    L.loopPath(ctx, add(L.tractor('#3E7A3A')), [[24, -56], [70, -56], [70, -44], [24, -44], [24, -35], [70, -35]], { speed: 2.2, pause: 1 });
+    L.loopPath(ctx, add(L.car('#F1F1F1')), [[10, 92], [10, -20], [10, -92]], { speed: 6.5, pause: 3 });
+    const gaucho = add(L.person('#FFB703', '#5B4636')); L.loopPath(ctx, gaucho, [[-40, 46], [-14, 46], [-14, 62], [-40, 62]], { speed: 1.2, bob: true, pause: 2 });
+    add(L.birds(ctx, 0, 0, 80, 36, 7), L.birds(ctx, -30, 30, 50, 28, 4));
 
     let tracking = null, sweepAngle = 0, tptzTrack = null;
     ctx.tick((dt) => {
@@ -75,7 +103,7 @@ export default {
               sunBall.position.set(60 - a * 120, 40 + Math.sin(a * Math.PI) * 40, -40); ctx.viewer.sun.position.copy(sunBall.position).multiplyScalar(0.8);
               b.textContent = `Batería ${st.b.toFixed(0)} % · ${String(Math.floor(st.h)).padStart(2, '0')}:${String(Math.floor((st.h % 1) * 60)).padStart(2, '0')}`; sm.textContent = `4G −71 dBm · carga ${(a * 38 + 4).toFixed(0)} W · panel 80 W`;
             } }); ctx.tween(tw);
-            await wait(7200); tg.remove(); ctx.viewer.sun.position.set(40, 60, 25); sunBall.position.set(60, 70, -40);
+            await wait(7200); tg.remove(); ctx.viewer.sun.position.set(48, 56, 30); sunBall.position.set(60, 70, -40);
             ctx.tag(solar, tagHTML(S.check, 'Autonomía 7 días sin sol', 'Batería 360 Wh · modo bajo consumo', 'ok'), { ttl: 3200, offsetY: 5.6 });
           } },
         { id: 'fire', icon: S.flame, label: 'Foco ígneo a gran distancia', desc: 'Columna de humo en el horizonte: la PTZ térmica la detecta, hace zoom 40x y fija coordenadas.',

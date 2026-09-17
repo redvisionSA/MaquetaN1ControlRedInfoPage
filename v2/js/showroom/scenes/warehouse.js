@@ -1,51 +1,71 @@
 /* =====================================================================
    Escena 3 — Depósitos, centros logísticos y playas de carga
+   Identidad: logística de seguridad industrial — grises fríos, amarillo
+   y naranja de señalización, azul Control Red en el galpón, contenedores
+   de colores, camiones que llegan y salen, autoelevadores en movimiento.
    ===================================================================== */
 import { S, path, strobe, wait, done, tagHTML } from './common.js';
 
 export default {
   id: 'warehouse',
-  camera: { pos: [44, 28, 46], target: [0, 1, 4], maxDistance: 130 },
+  camera: { pos: [46, 30, 50], target: [0, 1, 6], maxDistance: 140 },
   glb: null,
   build(ctx) {
     const { lib: L, add, THREE } = ctx;
-    add(L.ground(220, '#9A9C93'));
-    add(L.plane(120, 90, '#5A5D66', 0, 0.02, 8)); // playa de maniobras
-    // Galpón con frente abierto (docks) para ver el interior
+    add(L.ground(260, '#9BA38C', { color2: '#7E8A6C', amount: 0.2, scale: 0.05 }));
+    add(L.plane(122, 92, '#5B5F68', 0, 0.02, 8)); // playa de maniobras
     const W = 40, H = 9, D = 24, Z = -14;
+
+    /* ---- Galpón con frente abierto (docks) para ver el interior ---- */
     add(L.plane(W, D, '#7E838C', 0, 0.04, Z));
-    add(L.box(W, H, 0.4, '#CFD3D8', 0, 0, Z - D / 2), L.box(0.4, H, D, '#CFD3D8', -W / 2, 0, Z), L.box(0.4, H, D, '#CFD3D8', W / 2, 0, Z));
-    add(L.box(W + 0.4, 0.6, 0.4, '#344AB2', 0, H * 0.6, Z - D / 2 - 0.1));
-    add(L.box(W + 0.8, 0.5, D + 0.8, '#B4B9C2', 0, H, Z));
+    add(L.rbox(W, H, 0.4, '#D2D6DC', 0, 0, Z - D / 2, { r: 0.05 }), L.rbox(0.4, H, D, '#D2D6DC', -W / 2, 0, Z, { r: 0.05 }), L.rbox(0.4, H, D, '#D2D6DC', W / 2, 0, Z, { r: 0.05 }));
+    add(L.box(W + 0.4, 0.7, 0.42, '#344AB2', 0, H * 0.6, Z - D / 2), L.box(0.42, 0.7, D, '#344AB2', -W / 2, H * 0.6, Z), L.box(0.42, 0.7, D, '#344AB2', W / 2, H * 0.6, Z));
+    add(L.rbox(W + 0.8, 0.5, D + 0.8, '#B4B9C2', 0, H, Z, { r: 0.06 }));
+    const ridge = new THREE.Mesh(new THREE.CylinderGeometry(D / 2, D / 2, W + 0.8, 3, 1, false, Math.PI / 2), L.mat('#B4B9C2')); ridge.rotation.z = Math.PI / 2; ridge.scale.set(0.2, 1, 1); ridge.position.set(0, H + 0.5 + D * 0.05, Z); ridge.castShadow = true; add(ridge);
     for (let x = -W / 2 + 5; x < W / 2; x += 10) add(L.box(0.5, H, 0.5, '#9EA3AC', x, 0, Z + D / 2 - 0.3));
-    add(L.box(W, 2.2, 0.3, '#CFD3D8', 0, H - 2.2, Z + D / 2)); // dintel frontal
-    const doors = [-13, -4, 5, 14].map(x => add(L.dockDoor(x, 0, Z + D / 2 + 0.05, x === 5))); // puerta 5 abierta
-    const accessDoor = add(L.box(1.2, 2.3, 0.15, '#2A2E3A', 18.5, 0, Z + D / 2 + 0.05));
-    // Interior: pallets, estanterías, luminarias colgantes
+    add(L.box(W, 2.2, 0.3, '#D2D6DC', 0, H - 2.2, Z + D / 2)); // dintel frontal
+    add(L.rbox(9, 1.3, 0.25, '#344AB2', -8, H - 1.9, Z + D / 2 + 0.2, { r: 0.05 }), L.box(5.5, 0.32, 0.06, '#FFFFFF', -8.6, H - 1.35, Z + D / 2 + 0.36), L.box(1.4, 0.32, 0.06, '#E2231A', -4.4, H - 1.35, Z + D / 2 + 0.36));
+    [-13, -4, 5, 14].forEach(x => { add(L.dockDoor(x, 0, Z + D / 2 + 0.05, x === 5)); add(L.box(3.6, 0.35, 1.2, '#FFB703', x, 0, Z + D / 2 + 0.7)); for (let k = 0; k < 4; k++) add(L.box(0.45, 0.36, 1.22, '#1E1E22', x - 1.35 + k * 0.9, 0, Z + D / 2 + 0.7)); add(L.rbox(0.4, 0.6, 0.6, '#1E1E22', x - 2.1, 0, Z + D / 2 + 0.5, { r: 0.05 }), L.rbox(0.4, 0.6, 0.6, '#1E1E22', x + 2.1, 0, Z + D / 2 + 0.5, { r: 0.05 })); }); // niveladores + topes
+    const accessDoor = add(L.rbox(1.2, 2.3, 0.15, '#2A2E3A', 18.5, 0, Z + D / 2 + 0.05, { r: 0.03 })); accessDoor.userData.dynamic = true;
+    add(L.plane(0.4, 62, '#FFB703', -W / 2 + 0.6, 0.05, 8), L.plane(0.4, 62, '#FFB703', W / 2 - 0.6, 0.05, 8)); // franjas de seguridad
+    add(L.plane(W, 0.5, '#FFB703', 0, 0.05, Z + D / 2 + 1.6));
+
+    /* ---- Interior: pallets, estanterías, tablero, luminarias colgantes ---- */
     const pallets = []; for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) pallets.push(add(L.pallet(-15 + c * 3.2, Z - 8 + r * 4.2, ['#C8A060', '#B8926A', '#D2B27C'][(r + c) % 3])));
-    for (let c = 0; c < 4; c++) add(L.box(6, 5, 1.2, '#4A4F5C', 6 + c * 7 - 4, 0, Z - 10)), add(L.box(6, 0.15, 1.3, '#8A8F9C', 6 + c * 7 - 4, 2.4, Z - 10));
-    const board = add(L.box(1.2, 1.6, 0.25, '#8E97A8', -19.6, 1.2, Z - 4)); board.userData.heat = 0.25;
+    for (let c = 0; c < 4; c++) { add(L.box(6, 5, 1.2, '#4A4F5C', 6 + c * 7 - 4, 0, Z - 10), L.box(6, 0.15, 1.3, '#F04E23', 6 + c * 7 - 4, 2.4, Z - 10), L.box(6, 0.15, 1.3, '#F04E23', 6 + c * 7 - 4, 4.6, Z - 10)); for (let k = 0; k < 3; k++) add(L.rbox(1.2, 0.9, 1.0, L.pick(['#C8A060', '#344AB2', '#F1F1F1']), 6 + c * 7 - 4 - 2 + k * 2, 2.55, Z - 10, { r: 0.04 })); }
+    const board = add(L.rbox(1.2, 1.6, 0.25, '#8E97A8', -19.6, 1.2, Z - 4, { r: 0.03 })); board.userData.heat = 0.25;
+    add(L.crateStack(16, Z + 6, 3), L.crateStack(13.5, Z + 4, 2, '#F1F1F1'), L.coneT(-8, Z + 9), L.coneT(2, Z + 9.5));
     const inner = [[-12, Z - 4], [0, Z - 4], [12, Z - 4], [-12, Z + 5], [12, Z + 5]].map(([x, z]) => { const bulb = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.15, 0.5), new THREE.MeshStandardMaterial({ color: '#F2F2F2', emissive: '#FFF1D6', emissiveIntensity: 0 })); bulb.position.set(x, H - 0.4, z); bulb.userData.lampMesh = true; add(bulb); return ctx.lamp(new THREE.Vector3(x, H - 0.9, z), { intensity: 3.5, distance: 18, color: '#FFF1D6' }); });
-    // Patio: cerco, portón con barrera, radar de velocidad, luminarias
+
+    /* ---- Predio: cerco, portón, oficina, contenedores, tanques ---- */
     add(L.fence(-60, -40, 60, -40, 2.4), L.fence(-60, -40, -60, 50, 2.4), L.fence(60, -40, 60, 50, 2.4), L.fence(-60, 50, 30, 50, 2.4), L.fence(42, 50, 60, 50, 2.4));
-    add(L.guardBooth(45, 46, Math.PI)); const barrier = add(L.barrier(31, 47.5, 0, 8)); const arm = barrier.getObjectByName('arm');
+    add(L.guardBooth(45, 46, Math.PI)); add(L.canopy(10, 7, 36, 45.5, 4.6, '#EDE9E1')); const barrier = add(L.barrier(31, 47.5, 0, 8)); const arm = barrier.getObjectByName('arm');
     add(L.pole(41, 44.5, 4.2)); const speedCam = add(L.mount(41, 4.3, 44.5, L.camBullet(), Math.PI * 0.5, -0.3));
-    add(L.road(10, 30, 36, 42, Math.PI / 2, '#4A4D55'));
-    [[-40, 30, 0], [-10, 30, 0], [20, 30, 0], [-45, -20, Math.PI / 2], [50, -20, -Math.PI / 2]].forEach(([x, z, r]) => add(L.lampPost(ctx, x, z, 7, r)));
-    // Playa: carriles pintados, contenedores y camiones estacionados
-    for (let i = 0; i < 4; i++) add(L.plane(0.25, 30, '#E8E4D0', -14 + i * 9.4, 0.03, 20));
-    add(L.plane(60, 0.3, '#F5B400', -2, 0.03, 34), L.plane(60, 0.3, '#F5B400', -2, 0.03, 6));
-    [[-44, 4, '#344AB2'], [-44, 8.4, '#E2231A'], [-44, 12.8, '#6B6464'], [-36, 4, '#F5B400'], [-36, 8.4, '#344AB2']].forEach(([x, z, c]) => add(L.box(12, 2.6, 2.4, c, x, 0, z)));
-    add(L.box(12, 2.6, 2.4, '#CFD3D8', -44, 2.6, 8.4));
-    const t3 = add(L.truck('#F1F1F1')); t3.position.set(-10, 0, 28); t3.rotation.y = Math.PI;
-    // Cámaras
+    add(L.road(10, 34, 36, 62, Math.PI / 2, '#4A4D55'), L.road(10, 40, 36, 30, Math.PI / 2, '#4A4D55', { edge: false }));
+    add(L.zebra(10, 36, 40, Math.PI / 2), L.sign(42, 41, -Math.PI / 2, '#E2231A'), L.coneT(31.5, 42), L.bollard(30.5, 44.4), L.bollard(41.5, 49.5));
+    add(L.building(16, 4.2, 9, -48, -22, '#E9E5DD', { floors: 1, cols: 5, band: '#344AB2' })); add(L.plane(8, 10, '#CFCAC0', -36, 0.03, -22)); // oficina administrativa
+    [['#DDDDDD', -37, -19], ['#2B2F3A', -37, -25]].forEach(([c, x, z]) => { const v = add(L.car(c)); v.position.set(x, 0, z); });
+    add(L.flag(ctx, -42, -14, ['#344AB2', '#FFFFFF'], 7), L.flag(ctx, -39, -14, ['#E2231A', '#FFFFFF'], 7), L.flowerbed(3, 1.2, -48, -16.5), L.bench(-52, -16.5, 0), L.bin(-44, -17));
+    add(L.cyl(2.2, 2.2, 5, '#DADDE3', -50, 0, 8, 14), L.cyl(2.4, 2.4, 0.3, '#E2231A', -50, 5, 8, 14), L.cyl(1.4, 1.4, 4, '#F1F1F1', -50, 0, 16, 12)); // silos / tanque
+    for (let i = 0; i < 4; i++) add(L.plane(0.25, 30, '#E8E4D0', -14 + i * 9.4, 0.035, 20));
+    add(L.plane(60, 0.3, '#F5B400', -2, 0.035, 34), L.plane(60, 0.3, '#F5B400', -2, 0.035, 6));
+    add(L.container(-44, 30, '#344AB2', 0, 2), L.container(-44, 34.5, '#E2231A', 0, 1), L.container(-30, 30, '#6B6464', 0, 1), L.container(-30, 34.5, '#F5B400', 0, 2), L.container(52, 2, '#344AB2', Math.PI / 2, 1), L.container(56, 2, '#F04E23', Math.PI / 2, 2));
+    add(L.crateStack(-20, 40, 4), L.crateStack(-17, 40, 2, '#F1F1F1'), L.pallet(-14, 41, '#C8A060'), L.pallet(-12.6, 41, '#B8926A'));
+    [[-40, 30, 0], [-10, 30, 0], [20, 30, 0], [-45, -20, Math.PI / 2], [50, -20, -Math.PI / 2], [50, 20, -Math.PI / 2]].forEach(([x, z, r]) => add(L.lampPost(ctx, x, z, 7, r, { double: true })));
+    for (let x = -70; x <= 70; x += 12) { add(L.tree(x, -48, 1.4)); add(L.tree(x + 6, 58, 1.2)); }
+    for (let z = -40; z <= 60; z += 14) { add(L.pine(-70, z, 1.8)); add(L.pine(70, z, 1.8)); }
+    // Vecino: otro galpón lejano
+    add(L.warehouse(30, 8, 18, 40, -70, '#C9C3B4', '#F04E23'));
+
+    /* ---- Cámaras / dispositivos ---- */
     const colorvu = add(L.mount(-14.6, H - 1.4, Z + D / 2 - 0.6, L.camTurret(), Math.PI * 0.85, -0.55)); colorvu.scale.setScalar(1.4);
     const thermal = add(L.mount(W / 2 - 0.6, H - 1.2, Z + D / 2 - 1, L.camThermal(), -Math.PI * 0.7, -0.5));
     const minmoe = add(L.totem(20.2, Z + D / 2 + 0.7, 0));
     add(L.mount(-W / 2 + 0.6, H - 1.2, Z + D / 2 - 1, L.camBullet(), Math.PI * 0.7, -0.5));
     add(L.mount(0, H - 0.6, Z - D / 2 + 0.6, L.camBullet(), 0, -0.5));
     const nvr = add(L.nvrBox(46.4, 1.0, 46.5)); nvr.rotation.y = Math.PI;
-    // Vehículos
+
+    /* ---- Vehículos y personas ---- */
     const truck = add(L.truck('#E2231A')); truck.position.set(58, 0, 20); truck.rotation.y = Math.PI;
     const truck2 = add(L.truck('#3A6BD8')); truck2.position.set(5, 0, Z + D / 2 + 6.5); truck2.rotation.y = Math.PI / 2;
     const fork = add(L.forklift()); fork.position.set(-6, 0, Z + 6); const forkCam = new THREE.Object3D(); forkCam.position.set(0.9, 2.1, 0); fork.add(forkCam);
@@ -53,7 +73,14 @@ export default {
     const worker2 = add(L.person('#F5B400', '#2B2F3A')); worker2.position.set(-8, 0, Z + 3);
     const intruder = add(L.person('#2B2F3A', '#1A1C24')); intruder.visible = false;
     const dog = add(L.dog()); dog.visible = false;
-    const hotPallet = pallets[9];
+    const hotPallet = pallets[9]; hotPallet.userData.dynamic = true;
+
+    /* ---- Vida ambiente ---- */
+    L.loopPath(ctx, add(L.truck('#F1F1F1', '#344AB2')), [[36, 80], [36, 40], [36, 22], [-20, 22], [-20, 80]], { speed: 6, pause: 2.5 });
+    L.loopPath(ctx, add(L.forklift('#F04E23')), [[12, Z + 3], [22, Z + 3], [22, 12], [12, 12]], { speed: 2.4, pause: 1.5 });
+    const w3 = add(L.person('#F5B400', '#2B2F3A')); L.loopPath(ctx, w3, [[-18, 9], [0, 9], [0, 4], [-18, 4]], { speed: 1.4, bob: true, pause: 2 });
+    const chief = add(L.person('#FFFFFF', '#2B2F3A')); chief.position.set(-3, 0, Z + D / 2 + 3); L.idle(ctx, chief);
+    add(L.birds(ctx, 0, 0, 70, 34, 5));
 
     const setInner = (dim) => inner.forEach(l => { l.dim = dim; });
     const reset = () => { setInner(1); ctx.setHeat(hotPallet, 0.14); truck.position.set(58, 0, 20); truck.rotation.y = Math.PI; arm.rotation.z = 0; fork.position.set(-6, 0, Z + 6); fork.rotation.y = 0; worker.position.set(22, 0, 8); accessDoor.position.y = 1.15; intruder.visible = dog.visible = false; };
