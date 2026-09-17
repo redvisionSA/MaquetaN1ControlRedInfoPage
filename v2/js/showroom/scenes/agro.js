@@ -92,71 +92,100 @@ export default {
         { id: 'agro_bridge', target: link1, offsetY: 0.8, offset: [6, 3, 6] },
       ],
       actions: [
-        { id: 'solar', icon: S.sun, label: 'Monitoreo off-grid autónomo', desc: 'El panel sigue al sol simulado; batería, consumo y señal 4G en vivo.',
+        { id: 'solar', icon: S.sun, label: 'Monitoreo off-grid autónomo', desc: 'Panel 80 W + batería de litio + 4G: sin cables, sin red, con alertas al celular.',
           async run() {
             reset(); ctx.focus([8, 3, 12], [6, 3, 6], 1.5);
+            ctx.step(1, 3, 'Kit solar autónomo: panel de 80 W, batería 360 Wh y cámara con 4G. Sin zanja, sin tendido eléctrico.');
             const st = { h: 7, b: 61 };
             const tg = ctx.tag(solar, `<span class="tag-ic ok">${S.battery}</span><span class="tag-tx"><b>Batería 61 % · 07:00</b><small>4G −71 dBm · consumo 1,9 W</small></span>`, { ttl: 0, offsetY: 5.6 });
-            const b = tg.el.querySelector('b'), sm = tg.el.querySelector('small');
+            const b = tg.el.querySelector('b'), sm = tg.el.querySelector('small'); ctx.log('info', 'Cámara solar online · 4G', 'Batería 61 % · 07:00'); let mid = false;
             const tw = ctx.gsap.to(st, { h: 18, b: 96, duration: 7, ease: 'none', onUpdate: () => {
               const a = (st.h - 7) / 11; panel.rotation.x = -0.9 + a * 0.9; panel.rotation.z = (a - 0.5) * 0.8;
               sunBall.position.set(60 - a * 120, 40 + Math.sin(a * Math.PI) * 40, -40); ctx.viewer.sun.position.copy(sunBall.position).multiplyScalar(0.8);
               b.textContent = `Batería ${st.b.toFixed(0)} % · ${String(Math.floor(st.h)).padStart(2, '0')}:${String(Math.floor((st.h % 1) * 60)).padStart(2, '0')}`; sm.textContent = `4G −71 dBm · carga ${(a * 38 + 4).toFixed(0)} W · panel 80 W`;
+              if (!mid && a > 0.45) { mid = true; ctx.step(2, 3, 'Bajo consumo: la cámara duerme y despierta por PIR o por pedido desde la app; el panel sigue al sol.'); ctx.log('ok', 'Carga máxima 42 W', 'Mediodía · batería 82 %'); }
             } }); ctx.tween(tw);
             await wait(7200); tg.remove(); ctx.viewer.sun.position.set(48, 56, 30); sunBall.position.set(60, 70, -40);
-            ctx.tag(solar, tagHTML(S.check, 'Autonomía 7 días sin sol', 'Batería 360 Wh · modo bajo consumo', 'ok'), { ttl: 3200, offsetY: 5.6 });
+            ctx.step(3, 3, 'Autonomía de 7 días sin sol: aguanta una semana de lluvia sin apagarse.');
+            ctx.tag(solar, tagHTML(S.check, 'Autonomía 7 días sin sol', 'Batería 360 Wh · modo bajo consumo', 'ok'), { ttl: 3200, offsetY: 5.6 }); ctx.log('ok', 'Batería 96 % al atardecer', 'Autonomía estimada: 7 días'); await wait(2600);
           } },
-        { id: 'fire', icon: S.flame, label: 'Foco ígneo a gran distancia', desc: 'Columna de humo en el horizonte: la PTZ térmica la detecta, hace zoom 40x y fija coordenadas.',
+        { id: 'fire', icon: S.flame, label: 'Foco ígneo a gran distancia', desc: 'La PTZ térmica patrulla el horizonte, detecta el calor a 2,4 km y fija coordenadas.',
           async run() {
             reset(); ctx.focus([-40, 8, -34], [14, 8, 16], 1.6);
+            ctx.step(1, 4, 'La PTZ térmica patrulla presets sobre el horizonte: detecta anomalías de calor hasta 3 km, de día o de noche.');
+            const cone = ctx.cone(tptz, { fov: 12, aspect: 1.5, far: 90, color: '#FF6A00', opacity: 0.08 });
+            ctx.log('info', 'PTZ térmica · patrulla preset 1–6', 'Detección de fuego a 3 km'); await wait(1200);
             ctx.gsap.to(smoke.scale, { x: 1, y: 1, z: 1, duration: 3, ease: 'power2.out' }); ctx.gsap.to(fire.scale, { x: 1, y: 1, z: 1, duration: 3, delay: 0.6 });
             await wait(1800);
-            ctx.tag(tptz, tagHTML(S.thermo, 'Anomalía térmica · 2,4 km', 'Gradiente +14 °C · orientando…', 'warn'), { ttl: 3000, offsetY: 1 });
-            tptzTrack = new THREE.Vector3(70, 3, -78);
+            ctx.step(2, 4, 'Anomalía térmica detectada a 2,4 km en el lote vecino: la PTZ se orienta sola.');
+            ctx.tag(tptz, tagHTML(S.thermo, 'Anomalía térmica · 2,4 km', 'Gradiente +14 °C · orientando…', 'warn'), { ttl: 3000, offsetY: 1 }); ctx.log('warn', 'Anomalía térmica · azimut 48°', '2,4 km · gradiente +14 °C');
+            tptzTrack = new THREE.Vector3(70, 3, -78); cone.color('#FFB703');
             ctx.feed({ from: tptz, lookAt: [70, 3, -78], mode: 'th', fov: 40, label: 'PTZ térmica · 1x' });
             await wait(1400);
+            ctx.step(3, 4, 'Zoom óptico 40x y confirmación del foco: fuego, no un motor caliente.');
             const z = { f: 40 }; const tw = ctx.gsap.to(z, { f: 2.2, duration: 2.2, ease: 'power2.inOut', onUpdate: () => ctx.feed({ from: tptz, lookAt: [70, 3, -78], mode: 'th', fov: z.f, label: `PTZ térmica · ${(40 / z.f).toFixed(0)}x` }) }); ctx.tween(tw);
-            await wait(2400);
-            ctx.tag(fire, tagHTML(S.flame, 'Foco de incendio confirmado', '−34.6204, −58.4661 · alerta a bomberos', 'danger'), { ttl: 4800, offsetY: 6 });
-            await wait(4000); ctx.gsap.to(smoke.scale, { x: 0.001, y: 0.001, z: 0.001, duration: 1.2 }); ctx.gsap.to(fire.scale, { x: 0.001, y: 0.001, z: 0.001, duration: 1 }); await wait(1200); tptzTrack = null; ctx.feedOff();
+            const fb = ctx.feedBox(fire, { label: 'FUEGO CONFIRMADO', cls: 'alert', w: 3, h: 6 });
+            await wait(2400); cone.color('#FF3B30');
+            ctx.step(4, 4, 'Coordenadas del foco a bomberos y al encargado: minutos de ventaja para actuar.');
+            ctx.tag(fire, tagHTML(S.flame, 'Foco de incendio confirmado', '−34.6204, −58.4661 · alerta a bomberos', 'danger'), { ttl: 4800, offsetY: 6 }); ctx.log('danger', 'Incendio confirmado · coordenadas enviadas', '−34.6204, −58.4661 · bomberos + encargado');
+            await wait(4000); ctx.gsap.to(smoke.scale, { x: 0.001, y: 0.001, z: 0.001, duration: 1.2 }); ctx.gsap.to(fire.scale, { x: 0.001, y: 0.001, z: 0.001, duration: 1 }); await wait(1200); tptzTrack = null; fb.remove(); ctx.feedOff(); cone.color('#FF6A00');
           } },
         { id: 'line', icon: S.mic, label: 'Vehículo no autorizado en silobolsas', desc: 'Cruce de línea nocturno: la cámara solar habla, enciende strobe y avisa al celular.',
           async run() {
             reset(); ctx.night(1, 1.6); ctx.focus([16, 1, 14], [14, 7, 16], 1.6); zone.visible = true;
-            ctx.feed({ from: solarCam, lookAt: [22, 0.6, 18], mode: 'cv', fov: 62, label: 'Cámara solar · ColorVu 4G' });
+            ctx.step(1, 4, 'Línea virtual alrededor de los silobolsas: la cámara solar ColorVu vigila a color aun de noche.');
+            const cone = ctx.cone(solarCam, { fov: 62, aspect: 1.7, far: 20, color: '#6E85EE' });
+            ctx.feed({ from: solarCam, lookAt: [22, 0.6, 18], mode: 'cv', fov: 62, label: 'Cámara solar · ColorVu 4G' }); ctx.log('info', 'Regla de cruce de línea armada', 'Silobolsas · 23:30'); await wait(1400);
             pickup.visible = true; pickup.position.set(10, 0, 46); pickup.rotation.y = Math.PI / 2;
-            const d = path(ctx, pickup, [[14, 30], [20, 14]], { speed: 4.5, ease: 'power1.out' }); await wait(2800);
-            ctx.tag(pickup, tagHTML(S.alert, 'Cruce de línea · vehículo', 'No autorizado · 23:41', 'danger'), { ttl: 3600, offsetY: 2 });
+            const d = path(ctx, pickup, [[14, 30], [20, 14]], { speed: 4.5, ease: 'power1.out' }); const fb = ctx.feedBox(pickup, { label: 'VEHÍCULO', cls: 'vehicle', w: 4.4, h: 2.2 }); await wait(2600);
+            ctx.step(2, 4, 'Una camioneta cruza la línea de noche: AcuSense la clasifica como vehículo y dispara la regla.'); fb.set('CRUCE DE LÍNEA · VEHÍCULO', 'alert'); cone.color('#FF6B6B');
+            ctx.tag(pickup, tagHTML(S.alert, 'Cruce de línea · vehículo', 'No autorizado · 23:41', 'danger'), { ttl: 3600, offsetY: 2 }); ctx.log('warn', 'Cruce de línea: vehículo', 'Silobolsas · 23:41');
+            await wait(500);
+            ctx.step(3, 4, 'Respuesta automática: audio bidireccional, luz estroboscópica y push por 4G con el clip.');
             ctx.tag(solar, tagHTML(S.mic, '"Zona privada, retírese"', 'Audio bidireccional + strobe · push 4G', 'danger'), { ttl: 3600, offsetY: 5.6 });
-            strobe(ctx, sStrobe, { times: 14, period: 0.2, on: 3 }); ctx.gsap.to(sLight, { intensity: 200, duration: 0.2 });
+            strobe(ctx, sStrobe, { times: 14, period: 0.2, on: 3 }); ctx.gsap.to(sLight, { intensity: 200, duration: 0.2 }); ctx.log('danger', 'Strobe + audio · push 4G enviado', 'Clip 10 s al encargado');
             await done(d); await wait(500);
-            const b = path(ctx, pickup, [[12, 34], [10, 52]], { speed: 6 }); await done(b); pickup.visible = false; ctx.gsap.to(sLight, { intensity: 0, duration: 0.6 }); zone.visible = false; ctx.feedOff();
+            ctx.step(4, 4, 'La camioneta se va; el encargado tiene patente, hora y video sin haber ido al lote.');
+            const b = path(ctx, pickup, [[12, 34], [10, 52]], { speed: 6 }); await done(b); pickup.visible = false; fb.remove(); ctx.gsap.to(sLight, { intensity: 0, duration: 0.6 }); zone.visible = false; ctx.feedOff(); cone.color('#6E85EE'); ctx.log('ok', 'Vehículo se retira', 'Evento con clip guardado'); await wait(1600);
           } },
         { id: 'ptz', icon: S.zoom, label: 'PTZ DarkFighterX: tranquera a 480 m', desc: 'Zoom óptico 42x de noche y a color para vigilar accesos lejanos.',
           async run() {
             reset(); ctx.night(1, 1.4); ctx.focus([-24, 6, -8], [10, 5, 12], 1.5);
-            tracking = null; ptz.lookAt(85, 8, 0);
+            ctx.step(1, 3, 'PTZ DarkFighterX en el mástil del casco: sensor dual (color + IR) y 42x óptico.');
+            const cone = ctx.cone(ptz, { fov: 6, aspect: 1.7, far: 110, color: '#8B5CF6', opacity: 0.08 });
+            tracking = null; ptz.lookAt(85, 8, 0); ctx.log('info', 'PTZ preset 3 · tranquera este', '480 m · 0,002 lux'); await wait(800);
+            ctx.step(2, 3, 'Zoom a la tranquera a 480 m: a esta luz una cámara común sólo ve negro.');
             const z = { f: 50 }; const tw = ctx.gsap.to(z, { f: 1.6, duration: 3, ease: 'power2.inOut', onUpdate: () => ctx.feed({ from: ptz, lookAt: [85, 0.8, 0], mode: 'cv', fov: z.f, label: `DarkFighterX · ${(50 / z.f).toFixed(0)}x · 480 m` }) }); ctx.tween(tw);
-            await wait(3200); ctx.tag(gate, tagHTML(S.eye, 'Tranquera este · 480 m', 'Color de noche · Rapid Focus', 'ok'), { ttl: 3600, offsetY: 2 });
-            await wait(3600); ctx.feedOff();
+            await wait(3200); ctx.tag(gate, tagHTML(S.eye, 'Tranquera este · 480 m', 'Color de noche · Rapid Focus', 'ok'), { ttl: 3600, offsetY: 2 }); ctx.log('ok', 'Tranquera cerrada · sin novedad', '42x · Rapid Focus');
+            ctx.step(3, 3, 'Rondas automáticas por presets: tranquera, galpón, silobolsas y potrero, toda la noche.');
+            await wait(3200); ctx.feedOff();
           } },
         { id: 'radar', icon: S.radar, label: 'Radar perimetral + PTZ', desc: 'Intruso a pie en el campo de noche: el radar lo detecta y la PTZ lo sigue.',
           async run() {
             reset(); ctx.night(1, 1.6); ctx.focus([4, 1, -30], [16, 9, 16], 1.6);
-            sweep.visible = true; sweep.scale.setScalar(24); sweep.rotation.set(-Math.PI / 2, 0, 0);
+            ctx.step(1, 4, 'Radar de 120 m en campo abierto: el pasto alto y los animales no generan falsas alarmas.');
+            const sec = ctx.cone(radar, { sector: true, fov: 100, far: 34, color: '#6E85EE', opacity: 0.08, yaw: Math.PI });
+            sweep.visible = true; sweep.scale.setScalar(24); sweep.rotation.set(-Math.PI / 2, 0, 0); ctx.log('info', 'Radar · sector norte', '120 m · 0 objetivos'); await wait(1400);
             intruder.visible = true; intruder.position.set(30, 0, -44); const w = path(ctx, intruder, [[16, -38], [4, -34]], { speed: 2.2, bob: true });
-            await wait(2000); beam.visible = true; beam.scale.setScalar(26); beam.rotation.set(-Math.PI / 2, 0, 0); tracking = intruder;
-            ctx.tag(radar, tagHTML(S.radar, 'Radar: objetivo 96 m', 'Humano · 1,7 m/s · sin falsas alarmas por pasto', 'warn'), { ttl: 3600, offsetY: 4.8 });
+            await wait(2000); beam.visible = true; beam.scale.setScalar(26); beam.rotation.set(-Math.PI / 2, 0, 0); tracking = intruder; sec.color('#FFB703');
+            ctx.step(2, 4, 'Objetivo a 96 m: tamaño y velocidad compatibles con un humano a pie.');
+            ctx.tag(radar, tagHTML(S.radar, 'Radar: objetivo 96 m', 'Humano · 1,7 m/s · sin falsas alarmas por pasto', 'warn'), { ttl: 3600, offsetY: 4.8 }); ctx.log('warn', 'Radar: humano a 96 m', '1,7 m/s · rumbo al galpón'); await wait(800);
+            ctx.step(3, 4, 'El radar entrega las coordenadas a la PTZ: gira, enfoca y sigue al objetivo con strobe.');
             strobe(ctx, ptz.getObjectByName('strobe'), { times: 16, period: 0.2, on: 4 });
-            ctx.feed({ from: ptz, lookAt: intruder, mode: 'cv', fov: 14, label: 'PTZ · Auto-tracking' });
-            await done(w); await wait(600); const b = path(ctx, intruder, [[34, -46]], { speed: 4.5, bob: true }); await done(b);
-            intruder.visible = false; tracking = null; sweep.visible = beam.visible = false; ctx.feedOff();
+            ctx.feed({ from: ptz, lookAt: intruder, mode: 'cv', fov: 14, label: 'PTZ · Auto-tracking' }); const fb = ctx.feedBox(intruder, { label: 'HUMANO · TRACKING', cls: 'alert' }); ctx.log('danger', 'PTZ: seguimiento automático', 'Strobe + clip al encargado');
+            await done(w); await wait(600);
+            ctx.step(4, 4, 'Con luz encima y sabiendo que lo ven, se retira. Ninguna persona salió a recorrer el campo.');
+            const b = path(ctx, intruder, [[34, -46]], { speed: 4.5, bob: true }); await done(b);
+            intruder.visible = false; tracking = null; fb.remove(); sweep.visible = beam.visible = false; ctx.feedOff(); sec.color('#6E85EE'); ctx.log('ok', 'Objetivo fuera de rango', 'Evento cerrado'); await wait(1600);
           } },
         { id: 'bridge', icon: S.wifi, label: 'Enlace inalámbrico casa ⟷ galpón', desc: 'Video del galpón a la casa principal sin tender fibra ni cobre.',
           async run() {
-            reset(); ctx.focus([-33, 4, -12], [12, 8, 14], 1.4); await wait(1200);
-            ctx.tag(link1, tagHTML(S.wifi, 'Enlace 5 GHz · 4,8 km', '−62 dBm · 310 Mbps · 3 ms', 'ok'), { ttl: 3600, offsetY: 0.9 });
-            await wait(2600); ctx.tag(link1, tagHTML(S.check, '6 cámaras en HikCentral', 'Sin cableado · PoE pasivo', 'ok'), { ttl: 3000, offsetY: 0.9 });
+            reset(); ctx.focus([-33, 4, -12], [12, 8, 14], 1.4);
+            ctx.step(1, 3, 'Dos puentes de 5 GHz con línea de vista: 4,8 km entre el galpón y la casa, sin zanja.'); await wait(1200);
+            ctx.tag(link1, tagHTML(S.wifi, 'Enlace 5 GHz · 4,8 km', '−62 dBm · 310 Mbps · 3 ms', 'ok'), { ttl: 3600, offsetY: 0.9 }); ctx.log('ok', 'Enlace PtP: −62 dBm', '310 Mbps · latencia 3 ms');
+            await wait(2600); ctx.step(2, 3, 'Seis cámaras del galpón llegan a HikCentral en la casa como si estuvieran cableadas.');
+            ctx.tag(link1, tagHTML(S.check, '6 cámaras en HikCentral', 'Sin cableado · PoE pasivo', 'ok'), { ttl: 3000, offsetY: 0.9 }); ctx.log('ok', '6 canales en vivo', 'Uso del enlace: 38 %'); await wait(2400);
+            ctx.step(3, 3, 'Alimentación por PoE pasivo desde el galpón; alarma si el enlace cae.'); ctx.log('info', 'Watchdog de enlace activo', 'Aviso si RSSI < −75 dBm'); await wait(2000);
           } },
       ],
       reset,

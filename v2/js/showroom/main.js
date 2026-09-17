@@ -17,6 +17,21 @@ initTheme(); initNav(); const cartUI = initCart();
 const viewer = new ShowroomViewer({ container: $('#stage'), layer: $('#layer'), feedFrame: $('#feed') });
 window.__viewer = viewer; // depuración en consola
 
+/* ---------- Guion paso a paso + registro de eventos ---------- */
+const LOG_ICON = { ok: ICON.check, warn: ICON.alert, danger: ICON.alert, info: ICON.cube };
+viewer.onStep = (i, n, text) => {
+  const el = $('#step'); if (!n) { el.classList.remove('on'); return; }
+  $('#stepDots').innerHTML = Array.from({ length: n }, (_, k) => `<i class="${k < i - 1 ? 'done' : k === i - 1 ? 'cur' : ''}"></i>`).join('');
+  $('#stepN').textContent = `${i}/${n}`; $('#stepTx').textContent = text; el.classList.add('on');
+};
+viewer.onLog = (kind, title, sub = '') => {
+  const rows = $('#logRows'); $('#log').classList.add('on'); $('.sr-hint').style.display = 'none';
+  const row = document.createElement('div'); row.className = `row ${kind}`;
+  const t = new Date(); row.innerHTML = `<span class="ic">${LOG_ICON[kind] || ICON.cube}</span><span class="t">${t.toLocaleTimeString('es-AR', { hour12: false })}</span><span><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</span>`;
+  rows.prepend(row); while (rows.children.length > 4) rows.lastChild.remove();
+};
+const clearLog = () => { $('#logRows').innerHTML = ''; $('#log').classList.remove('on'); $('.sr-hint').style.display = ''; };
+
 /* ---------- Tabs ---------- */
 const tabs = $('#tabs');
 tabs.innerHTML = SCENES.map(s => `<button class="sr-tab" role="tab" data-scene="${s.id}" style="--c:${s.color}" aria-selected="false"><span class="dot"></span>${s.name}</button>`).join('');
@@ -39,7 +54,7 @@ async function go(id) {
   const loader = $('#loader'); loader.classList.remove('off'); $('#loaderText').textContent = `Construyendo ${SCENES.find(s => s.id === id).name.toLowerCase()}…`;
   tabs.querySelectorAll('.sr-tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.scene === id)));
   await new Promise(r => setTimeout(r, 60));
-  const built = await viewer.loadScene(MODS[id]);
+  clearLog(); const built = await viewer.loadScene(MODS[id]);
   mountHotspots(built.hotspots); mountActions(built.actions, built.reset);
   const meta = SCENES.find(s => s.id === id);
   $('#sceneName').textContent = `Soluciones para ${meta.name.toLowerCase()}`; $('#sceneObjective').textContent = meta.objective;
@@ -62,9 +77,9 @@ function mountActions(actions, reset) {
   actions.forEach(a => {
     const b = document.createElement('button'); b.className = 'act'; b.innerHTML = `<span class="ic">${a.icon}</span><span><b>${a.label}</b><small>${a.desc}</small></span>`;
     b.addEventListener('click', async () => {
-      if (running) return; running = true; list.querySelectorAll('.act').forEach(x => x.disabled = true); b.classList.add('running');
+      if (running) return; running = true; clearLog(); viewer.clearCones(); list.querySelectorAll('.act').forEach(x => x.disabled = true); b.classList.add('running');
       try { await a.run(); } catch (err) { console.error(err); toast('La simulación se interrumpió', 'warn'); }
-      finally { running = false; b.classList.remove('running'); list.querySelectorAll('.act').forEach(x => x.disabled = false); }
+      finally { running = false; b.classList.remove('running'); list.querySelectorAll('.act').forEach(x => x.disabled = false); viewer.onStep(0, 0, ''); }
     });
     list.appendChild(b);
   });

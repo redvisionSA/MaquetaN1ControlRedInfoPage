@@ -95,65 +95,94 @@ export default {
         { id: 'wh_acusense', target: nvr, offsetY: 1.2, offset: [-4, 2.5, -6] },
       ],
       actions: [
-        { id: 'dark', icon: S.split, label: 'Apagar luminarias: IR vs ColorVu', desc: 'Galpón a oscuras. Deslizá el comparador: IR clásico a la izquierda, ColorVu a color a la derecha.',
+        { id: 'dark', icon: S.split, label: 'Apagar luminarias: IR vs ColorVu', desc: 'Galpón a oscuras. Deslizá el comparador: IR clásico a la izquierda, ColorVu F1.0 a color a la derecha.',
           async run() {
-            reset(); ctx.night(1, 1.6); await wait(600); setInner(0);
-            ctx.focus([-6, 1, Z + 2], [16, 9, 18], 1.6);
+            reset(); ctx.night(1, 1.6);
+            ctx.step(1, 3, 'Apagamos las luminarias del galpón: oscuridad total, como un turno noche sin actividad.'); await wait(700); setInner(0);
+            ctx.focus([-6, 1, Z + 2], [16, 9, 18], 1.6); ctx.log('info', 'Luminarias del galpón apagadas', '0,001 lux en pasillos'); await wait(1200);
+            ctx.step(2, 3, 'Comparador: a la izquierda una cámara IR clásica (blanco y negro); a la derecha ColorVu con apertura F1.0.');
+            const cone = ctx.cone(colorvu, { fov: 64, aspect: 1.7, far: 16, color: '#F04E23' });
             ctx.feed({ from: colorvu, lookAt: [-4, 0.6, Z - 6], mode: 'split', fov: 64, label: 'CAM 03 · ColorVu 4K F1.0', split: 0.5 });
             ctx.tag(colorvu, tagHTML(S.eye, 'ColorVu F1.0', 'Color real a 0,0005 lux · sin reflectores', 'ok'), { ttl: 4200, offsetY: 1 });
-            const w = path(ctx, worker2, [[-2, Z - 2], [8, Z - 3]], { speed: 1.8, bob: true }); await done(w);
-            const b = path(ctx, worker2, [[-8, Z + 3]], { speed: 2.2, bob: true }); await done(b);
+            const fb = ctx.feedBox(worker2, { label: 'OPERARIO · CHALECO AMARILLO', cls: 'human' });
+            const w = path(ctx, worker2, [[-2, Z - 2], [8, Z - 3]], { speed: 1.8, bob: true }); await wait(1600);
+            ctx.step(3, 3, 'Con color real se distingue el uniforme, el color del paquete y la patente. Deslizá el comparador para verlo.');
+            ctx.log('ok', 'ColorVu: identificación a color de noche', 'Sin reflectores ni luz ambiente'); await done(w);
+            const b = path(ctx, worker2, [[-8, Z + 3]], { speed: 2.2, bob: true }); await done(b); fb.remove();
           } },
-        { id: 'fire', icon: S.flame, label: 'Foco de sobrecalentamiento', desc: 'Un pallet sube a 65 °C: la térmica alerta antes de que aparezca la llama.',
+        { id: 'fire', icon: S.flame, label: 'Foco de sobrecalentamiento · térmica', desc: 'Un pallet sube a 65 °C: la termografía alerta antes de que aparezca la llama.',
           async run() {
-            reset(); ctx.focus([hotPallet.position.x, 1, hotPallet.position.z], [8, 6, 10], 1.6);
-            ctx.feed({ from: thermal, lookAt: hotPallet, mode: 'th', fov: 40, label: 'HeatPro · Termografía' });
+            reset(); ctx.focus([hotPallet.position.x, 1, hotPallet.position.z], [10, 7, 12], 1.6);
+            ctx.step(1, 4, 'La HeatPro hace termografía continua sobre pallets, tableros y motores: cada píxel es una temperatura.');
+            const cone = ctx.cone(thermal, { fov: 40, aspect: 1.7, far: 16, color: '#FF6A00' });
+            ctx.feed({ from: thermal, lookAt: hotPallet, mode: 'th', fov: 40, label: 'HeatPro · Termografía' }); ctx.log('info', 'Termografía activa · 18 zonas', 'Umbral 65 °C · gradiente 8 °C/min'); await wait(1600);
             const st = { t: 24 }; const tg = ctx.tag(hotPallet, tagHTML(S.thermo, '24 °C', 'Temperatura de superficie', ''), { ttl: 0, offsetY: 1.8 });
-            const b = tg.el.querySelector('b');
-            const tw = ctx.gsap.to(st, { t: 65, duration: 4.5, ease: 'power1.in', onUpdate: () => { b.textContent = `${st.t.toFixed(0)} °C`; ctx.setHeat(hotPallet, 0.14 + (st.t - 24) / 41 * 0.86); } }); ctx.tween(tw);
+            const b = tg.el.querySelector('b'); const fb = ctx.feedBox(hotPallet, { label: '24 °C', cls: 'vehicle', w: 1.3, h: 1.4 }); let warned = false;
+            ctx.step(2, 4, 'Un pallet con baterías empieza a calentarse: 24 → 65 °C en minutos, sin humo todavía.');
+            const tw = ctx.gsap.to(st, { t: 65, duration: 4.5, ease: 'power1.in', onUpdate: () => { const T = st.t.toFixed(0); b.textContent = `${T} °C`; fb.set(`${T} °C`, st.t > 45 ? 'alert' : 'vehicle'); ctx.setHeat(hotPallet, 0.14 + (st.t - 24) / 41 * 0.86); if (!warned && st.t > 45) { warned = true; ctx.log('warn', 'Gradiente térmico +9 °C/min', 'Pallet B-09 · pre-alarma'); } } }); ctx.tween(tw);
             await wait(4600); tg.remove();
-            ctx.tag(hotPallet, tagHTML(S.alert, 'Alerta preventiva · 65 °C', 'Umbral superado · gradiente +9 °C/min', 'danger'), { ttl: 4200, offsetY: 1.8 });
-            ctx.tag(thermal, tagHTML(S.bell, 'Evento → HikCentral', 'Bomberos internos notificados', 'danger'), { ttl: 4200, offsetY: 0.9 });
-            await wait(3800); ctx.setHeat(hotPallet, 0.14);
+            ctx.step(3, 4, 'Umbral de 65 °C superado: alerta preventiva antes de que exista llama o humo.'); cone.color('#FF3B30');
+            ctx.tag(hotPallet, tagHTML(S.alert, 'Alerta preventiva · 65 °C', 'Umbral superado · gradiente +9 °C/min', 'danger'), { ttl: 4200, offsetY: 1.8 }); ctx.log('danger', 'Alarma de temperatura · 65 °C', 'Pallet B-09 · pasillo 2');
+            await wait(1800);
+            ctx.step(4, 4, 'Evento a HikCentral y a la brigada interna con la imagen térmica: se retira el pallet antes del siniestro.');
+            ctx.tag(thermal, tagHTML(S.bell, 'Evento → HikCentral', 'Bomberos internos notificados', 'danger'), { ttl: 4200, offsetY: 0.9 }); ctx.log('ok', 'Brigada notificada · pallet retirado', 'Sin incendio · 3 min');
+            await wait(3000); ctx.setHeat(hotPallet, 0.14); fb.remove(); cone.color('#FF6A00'); ctx.feedOff();
           } },
-        { id: 'speed', icon: S.gauge, label: 'Camión en playa: radar de velocidad', desc: 'El radar mide la velocidad y proyecta la infracción con captura de patente.',
+        { id: 'speed', icon: S.gauge, label: 'Camión en playa: radar de velocidad', desc: 'El checkpoint mide la velocidad por radar y registra la infracción con patente.',
           async run() {
             reset(); ctx.focus([36, 1, 34], [-12, 9, 14], 1.6);
-            ctx.feed({ from: speedCam, lookAt: [36, 0.8, 20], mode: 'color', fov: 45, label: 'Checkpoint · Radar + ANPR' });
+            ctx.step(1, 3, 'Checkpoint con radar en la playa: límite interno 20 km/h en la zona de docks.');
+            const cone = ctx.cone(speedCam, { fov: 45, aspect: 1.7, far: 26, color: '#FFB703' });
+            ctx.feed({ from: speedCam, lookAt: [36, 0.8, 20], mode: 'color', fov: 45, label: 'Checkpoint · Radar + ANPR' }); ctx.log('info', 'Checkpoint activo · límite 20 km/h', 'Radar 24 GHz + ANPR'); await wait(1200);
             const sp = { v: 0 }; const tg = ctx.tag(truck, tagHTML(S.gauge, '0 km/h', 'Límite interno 20 km/h', ''), { ttl: 0, offsetY: 3.6 }); const b = tg.el.querySelector('b');
-            const tw = ctx.gsap.to(sp, { v: 35, duration: 3.2, ease: 'power1.out', onUpdate: () => { b.textContent = `${sp.v.toFixed(0)} km/h`; if (sp.v > 20) tg.el.classList.add('danger-tag'); } }); ctx.tween(tw);
+            const fb = ctx.feedBox(truck, { label: 'CAMIÓN · 0 km/h', cls: 'vehicle', w: 9, h: 3.4 }); let over = false;
+            ctx.step(2, 3, 'El camión acelera en la playa: el radar mide cada vehículo por separado.');
+            const tw = ctx.gsap.to(sp, { v: 35, duration: 3.2, ease: 'power1.out', onUpdate: () => { const V = sp.v.toFixed(0); b.textContent = `${V} km/h`; fb.set(`CAMIÓN · ${V} km/h`, sp.v > 20 ? 'alert' : 'vehicle'); if (sp.v > 20) tg.el.classList.add('danger-tag'); if (!over && sp.v > 20) { over = true; cone.color('#FF3B30'); ctx.log('warn', 'Exceso de velocidad: 21 km/h', 'Playa de maniobras · carril 2'); } } }); ctx.tween(tw);
             const d = path(ctx, truck, [[36, 20], [36, -6]], { speed: 8, ease: 'power1.in' }); await wait(3400); tg.remove();
+            ctx.step(3, 3, 'Infracción registrada con velocidad, patente y foto: auditoría de seguridad interna.');
             ctx.tag(truck, `<span class="plate">AF 789 HJ</span><span class="tag-tx"><b>35 km/h · exceso</b><small>Infracción registrada · 11:02</small></span>`, { ttl: 3600, offsetY: 3.6, cls: 'plate-tag danger-tag' });
-            await done(d); ctx.feedOff();
+            ctx.log('danger', 'Infracción: AF 789 HJ · 35 km/h', 'Foto + patente · aviso a supervisor');
+            await done(d); fb.remove(); ctx.feedOff(); cone.color('#FFB703'); await wait(800);
           } },
         { id: 'mdvr', icon: S.truck, label: 'Autoelevador con MDVR + DSM', desc: 'Vista desde la cabina: ADAS, telemetría y detección de fatiga del operador.',
           async run() {
             reset(); ctx.focus([-2, 1, Z + 2], [12, 7, 14], 1.5);
-            ctx.feed({ from: forkCam, lookAt: [40, 1.2, Z + 6], mode: 'dash', fov: 95, label: 'MDVR · Autoelevador 02' });
+            ctx.step(1, 3, 'MDVR a bordo con GPS y 4G: cámara frontal, cámara al operador (DSM) y grabación local.');
+            ctx.feed({ from: forkCam, lookAt: [40, 1.2, Z + 6], mode: 'dash', fov: 95, label: 'MDVR · Autoelevador 02' }); ctx.log('info', 'Autoelevador 02 online', 'GPS · 4G · 4 canales'); await wait(1200);
             const d = path(ctx, fork, [[4, Z + 6], [10, Z + 2], [16, Z + 2]], { speed: 2.4, ease: 'power1.inOut' });
-            await wait(1400); ctx.tag(fork, tagHTML(S.check, 'DSM: operador atento', 'GPS · 6 km/h · geocerca OK', 'ok'), { ttl: 2600, offsetY: 2.5 });
-            await wait(2600); ctx.tag(fork, tagHTML(S.alert, 'ADAS: peatón adelante', 'Alerta sonora en cabina', 'warn'), { ttl: 2600, offsetY: 2.5 });
-            await done(d); await wait(400); ctx.feedOff();
+            await wait(1400); ctx.step(2, 3, 'DSM mira al operador: detecta fatiga, celular o distracción y avisa en cabina.');
+            ctx.tag(fork, tagHTML(S.check, 'DSM: operador atento', 'GPS · 6 km/h · geocerca OK', 'ok'), { ttl: 2600, offsetY: 2.5 }); ctx.log('ok', 'DSM: operador atento', '6 km/h · dentro de geocerca');
+            await wait(2600); ctx.step(3, 3, 'ADAS: peatón adelante → alarma sonora en cabina y evento a HikCentral Mobility.');
+            ctx.tag(fork, tagHTML(S.alert, 'ADAS: peatón adelante', 'Alerta sonora en cabina', 'warn'), { ttl: 2600, offsetY: 2.5 }); ctx.log('warn', 'ADAS: peatón a 3 m', 'Alarma en cabina · velocidad reducida');
+            await done(d); await wait(600); ctx.feedOff();
           } },
         { id: 'access', icon: S.face, label: 'Acceso de personal al depósito', desc: 'Solo personal del turno: rostro validado y la puerta se destraba.',
           async run() {
             reset(); ctx.focus([20, 1, Z + D / 2 + 1], [5, 3, 7], 1.4);
+            ctx.step(1, 3, 'Terminal MinMoe en la puerta de personal: rostro, tarjeta o QR según el turno asignado.');
+            const cone = ctx.cone(minmoe, { fov: 80, aspect: 1.3, far: 2.2, color: '#6E85EE' });
             const w = path(ctx, worker, [[21, 4], [20.6, Z + D / 2 + 2.2]], { speed: 2.4, bob: true }); await done(w);
+            ctx.step(2, 3, 'Rostro vivo verificado en 0,2 s y turno vigente: la cerradura se libera.');
             ctx.tag(worker, `<span class="face-ring"></span>`, { ttl: 1500, offsetY: 1.75, cls: 'bare' }); await wait(1000);
-            ctx.tag(minmoe, tagHTML(S.check, 'Turno mañana · autorizado', 'Operario 117 · 0,2 s', 'ok'), { ttl: 3000, offsetY: 0.6 });
+            ctx.tag(minmoe, tagHTML(S.check, 'Turno mañana · autorizado', 'Operario 117 · 0,2 s', 'ok'), { ttl: 3000, offsetY: 0.6 }); cone.color('#3DD68C'); ctx.log('ok', 'Acceso: operario 117', 'Turno mañana · puerta personal');
             ctx.gsap.to(accessDoor.position, { y: 3.4, duration: 0.8, ease: 'power2.inOut' }); await wait(700);
             const w2 = path(ctx, worker, [[18.5, Z + D / 2 - 2]], { speed: 2.2, bob: true }); await done(w2);
-            ctx.gsap.to(accessDoor.position, { y: 1.15, duration: 0.8 });
+            ctx.step(3, 3, 'Presentismo automático y control de aforo: quién está adentro en cada momento.');
+            ctx.gsap.to(accessDoor.position, { y: 1.15, duration: 0.8 }); ctx.log('info', 'Presentismo: 23 personas en planta', 'Aforo máximo 40'); await wait(2000);
           } },
         { id: 'acusense', icon: S.eye, label: 'AcuSense: humano vs. animal', desc: 'De noche, un perro en el patio se ignora; un humano dispara la alerta.',
           async run() {
             reset(); ctx.night(1, 1.4); ctx.focus([-30, 1, 30], [14, 7, 14], 1.5);
-            ctx.feed({ from: [-40, 6.6, 30], lookAt: [-30, 0.5, 22], mode: 'ir', fov: 60, label: 'CAM patio · AcuSense' });
-            dog.visible = true; dog.position.set(-42, 0, 18); const d = path(ctx, dog, [[-30, 24], [-18, 20]], { speed: 3 }); await wait(1400);
-            ctx.tag(dog, tagHTML(S.check, 'Animal · ignorado', 'Sin falsa alarma', 'ok'), { ttl: 2600, offsetY: 1 }); await done(d); dog.visible = false;
-            intruder.visible = true; intruder.position.set(-44, 0, 26); const w = path(ctx, intruder, [[-32, 26], [-26, 22]], { speed: 2.2, bob: true }); await wait(1800);
-            ctx.tag(intruder, tagHTML(S.alert, 'Humano · alerta', 'Notificación push + grabación', 'danger'), { ttl: 3200, offsetY: 2.3 }); await done(w);
-            const b = path(ctx, intruder, [[-46, 28]], { speed: 4.5, bob: true }); await done(b); intruder.visible = false; ctx.feedOff();
+            ctx.step(1, 4, 'Cámara AcuSense sobre el patio de contenedores con regla de intrusión nocturna.');
+            ctx.feed({ from: [-40, 6.6, 30], lookAt: [-30, 0.5, 22], mode: 'ir', fov: 60, label: 'CAM patio · AcuSense' }); ctx.log('info', 'CAM patio · regla de intrusión', '22:00–06:00 · IR 60 m'); await wait(1400);
+            dog.visible = true; dog.position.set(-42, 0, 18); const d = path(ctx, dog, [[-30, 24], [-18, 20]], { speed: 3 }); const fbd = ctx.feedBox(dog, { label: 'ANIMAL', cls: 'animal', w: 0.9, h: 0.7 }); await wait(1400);
+            ctx.step(2, 4, 'Un perro cruza el patio: clasificado como animal, la alarma no se dispara.');
+            ctx.tag(dog, tagHTML(S.check, 'Animal · ignorado', 'Sin falsa alarma', 'ok'), { ttl: 2600, offsetY: 1 }); ctx.log('ok', 'Movimiento: animal', 'Filtrado por AcuSense'); await done(d); dog.visible = false; fbd.remove();
+            intruder.visible = true; intruder.position.set(-44, 0, 26); const w = path(ctx, intruder, [[-32, 26], [-26, 22]], { speed: 2.2, bob: true }); const fb = ctx.feedBox(intruder, { label: 'HUMANO', cls: 'human' }); await wait(1800);
+            ctx.step(3, 4, 'Un humano entra a la zona: alerta inmediata con clip al guardia y al NVR.'); fb.set('INTRUSIÓN · HUMANO', 'alert');
+            ctx.tag(intruder, tagHTML(S.alert, 'Humano · alerta', 'Notificación push + grabación', 'danger'), { ttl: 3200, offsetY: 2.3 }); ctx.log('danger', 'Intrusión: humano en patio', 'Push + grabación de evento'); await done(w);
+            ctx.step(4, 4, 'El guardia interviene con la evidencia en mano; ninguna falsa alarma en toda la noche.');
+            const b = path(ctx, intruder, [[-46, 28]], { speed: 4.5, bob: true }); await done(b); intruder.visible = false; fb.remove(); ctx.feedOff(); ctx.log('ok', 'Evento cerrado', '0 falsas alarmas esta noche'); await wait(1600);
           } },
       ],
       reset,

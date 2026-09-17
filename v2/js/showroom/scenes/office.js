@@ -114,83 +114,119 @@ export default {
         { id: 'office_network', target: rack, offsetY: 2.4, offset: [-3, 2, 6] },
       ],
       actions: [
-        { id: 'hybrid', icon: S.moon, label: 'Simular intruso nocturno', desc: 'Smart Hybrid Light: IR discreto → luz blanca y color al detectar un humano.',
+        { id: 'hybrid', icon: S.moon, label: 'Intruso nocturno · Smart Hybrid Light', desc: 'IR invisible por defecto; al clasificar un humano enciende luz blanca y graba a color.',
           async run() {
             reset(); ctx.night(1, 1.6); ctx.focus([8, 1, 5], [15, 9, 14], 1.6);
+            ctx.step(1, 4, 'De noche la cámara vigila en infrarrojo: luz invisible, imagen en blanco y negro.');
+            const cone = ctx.cone(hybrid, { fov: 62, aspect: 1.7, far: 15, color: '#6E85EE' });
             ctx.feed({ from: hybrid, lookAt: [6, 0.6, 8], mode: 'ir', fov: 62, label: 'CAM 01 · Smart Hybrid Light' });
+            ctx.log('info', 'CAM 01 en modo IR', 'Luz IR 40 m · 0 lux'); await wait(1800);
             intruder.visible = true; intruder.position.set(24, 0, 4);
             const walk = path(ctx, intruder, [[12, 6], [2, 7]], { speed: 2.2, bob: true });
-            await wait(2600);
-            ctx.tag(hybrid, tagHTML(S.eye, 'Humano detectado', 'Luz blanca ON · grabando a color', 'warn'), { ttl: 4200, offsetY: 0.9 });
-            ctx.gsap.to(hybridLight, { intensity: 140, duration: 0.25 });
+            await wait(2200);
+            ctx.step(2, 4, 'AcuSense clasifica el objetivo: es un humano, no un auto, un perro ni una rama.');
+            const fb = ctx.feedBox(intruder, { label: 'HUMANO 97 %', cls: 'human' });
+            ctx.log('warn', 'AcuSense: humano en zona de intrusión', 'Regla: perímetro oficinas · fuera de horario'); await wait(1500);
+            ctx.step(3, 4, 'Smart Hybrid Light: enciende luz blanca, el video pasa a color y disuade al intruso.');
+            ctx.tag(hybrid, tagHTML(S.eye, 'Luz blanca ON', 'Grabando a todo color', 'warn'), { ttl: 3800, offsetY: 0.9 });
+            ctx.gsap.to(hybridLight, { intensity: 140, duration: 0.25 }); cone.color('#FFE7B8');
             ctx.feed({ from: hybrid, lookAt: [6, 0.6, 8], mode: 'cv', fov: 62, label: 'CAM 01 · Smart Hybrid Light' });
-            ctx.tag(intruder, tagHTML(S.alert, 'Alerta AcuSense', 'Intrusión · perímetro oficinas', 'danger'), { ttl: 4000, offsetY: 2.3 });
+            fb.set('INTRUSIÓN · HUMANO', 'alert'); ctx.log('danger', 'Intrusión confirmada · clip a color', 'Push a Hik-Connect · sirena de la cámara');
             await done(walk); await wait(800);
-            ctx.gsap.to(hybridLight, { intensity: 0, duration: 0.8 }); intruder.visible = false;
+            ctx.step(4, 4, 'Se retira: la luz se apaga sola y la cámara vuelve al IR discreto.');
+            ctx.gsap.to(hybridLight, { intensity: 0, duration: 0.8 }); intruder.visible = false; fb.remove(); cone.color('#6E85EE');
             ctx.feed({ from: hybrid, lookAt: [6, 0.6, 8], mode: 'ir', fov: 62, label: 'CAM 01 · Smart Hybrid Light' });
+            ctx.log('ok', 'Vuelve a modo IR', 'Evento cerrado · 00:42 de clip'); await wait(2200);
           } },
-        { id: 'access', icon: S.face, label: 'Acceso peatonal MinMoe', desc: 'Rostro validado en 0,2 s, luz verde y las alas de vidrio se abren.',
+        { id: 'access', icon: S.face, label: 'Acceso peatonal MinMoe + speed gate', desc: 'Rostro vivo validado en 0,2 s; el molinete abre y registra la asistencia.',
           async run() {
             reset(); ctx.focus([2.6, 1, 4.4], [5, 3, 6.5], 1.4);
+            ctx.step(1, 4, 'El empleado se acerca al terminal MinMoe: reconoce el rostro entre 0,3 y 2 m, incluso con barbijo.');
+            const cone = ctx.cone(totem, { fov: 80, aspect: 1.3, far: 2.4, color: '#6E85EE' });
             const w = path(ctx, employee, [[3.4, 9], [3.4, 6.4]], { speed: 2.4, bob: true }); await done(w);
-            ctx.tag(employee, `<span class="face-ring"></span>`, { ttl: 1600, offsetY: 1.75, cls: 'bare' });
-            await wait(900);
-            screen.material.emissive.set('#3DD68C'); screen.material.emissiveIntensity = 1.4; led.material.emissive.set('#3DD68C');
+            ctx.step(2, 4, 'Detección de rostro vivo (anti-spoofing): descarta fotos, videos y máscaras.');
+            ctx.tag(employee, `<span class="face-ring"></span>`, { ttl: 1600, offsetY: 1.75, cls: 'bare' }); ctx.log('info', 'MinMoe: rostro detectado', 'Liveness OK · lente dual 2 MP'); await wait(1100);
+            ctx.step(3, 4, 'Comparación en 0,2 s contra 6.000 rostros locales: LED verde y las alas de vidrio se abren.');
+            screen.material.emissive.set('#3DD68C'); screen.material.emissiveIntensity = 1.4; led.material.emissive.set('#3DD68C'); cone.color('#3DD68C');
             ctx.tag(totem, tagHTML(S.check, 'Rostro verificado · 0,2 s', 'Empleado 0042 · Anti-spoofing OK', 'ok'), { ttl: 3200, offsetY: 1.9 });
+            ctx.log('ok', 'Acceso concedido · Empleado 0042', 'Speed gate: apertura 0,3 s');
             ctx.gsap.to(wingL.rotation, { y: -1.25, duration: 0.45, ease: 'power3.out' }); ctx.gsap.to(wingR.rotation, { y: 1.25, duration: 0.45, ease: 'power3.out' });
             await wait(400);
             const w2 = path(ctx, employee, [[2.4, 4.2], [1.4, 1.6], [0, -0.6]], { speed: 2.2, bob: true }); await done(w2);
+            ctx.step(4, 4, 'Registro de asistencia en HikCentral; anti-tailgating por IR: sólo pasa una persona por validación.');
             ctx.gsap.to(wingL.rotation, { y: 0, duration: 0.5 }); ctx.gsap.to(wingR.rotation, { y: 0, duration: 0.5 });
-            led.material.emissive.set('#E2231A'); screen.material.emissive.set('#4A62D6'); screen.material.emissiveIntensity = 0.5;
+            led.material.emissive.set('#E2231A'); screen.material.emissive.set('#4A62D6'); screen.material.emissiveIntensity = 0.5; cone.color('#6E85EE');
+            ctx.log('ok', 'Asistencia registrada · 08:03', 'Turno mañana · HikCentral Access'); await wait(2200);
           } },
-        { id: 'acuseek', icon: S.search, label: 'Buscar: "persona con campera roja"', desc: 'AcuSeek: el NVR entiende lenguaje natural y devuelve el clip exacto.',
+        { id: 'acuseek', icon: S.search, label: 'AcuSeek: "persona con campera roja"', desc: 'El NVR DeepinMind indexa atributos y devuelve el clip exacto con lenguaje natural.',
           async run() {
             reset(); ctx.focus([-18.4, 1.4, 1.6], [4, 2.6, 6], 1.4);
+            ctx.step(1, 3, 'Escribís la búsqueda en lenguaje natural en el NVR DeepinMind, sin filtros ni horarios.');
             const t = ctx.tag(nvr, `<span class="tag-ic">${S.search}</span><span class="tag-tx"><b class="typed" data-text="persona con campera roja"></b><small>AcuSeek · NVR DeepinMind</small></span>`, { ttl: 4200, offsetY: 1.2 });
             const el = t.el.querySelector('.typed'); const txt = el.dataset.text; for (let i = 1; i <= txt.length; i++) { el.textContent = txt.slice(0, i); await wait(45); }
-            await wait(600); el.parentElement.querySelector('small').textContent = '3 coincidencias · 14:32 · 11:07 · 09:41';
+            ctx.log('info', 'Consulta AcuSeek', '"persona con campera roja" · 16 canales · últimas 24 h'); await wait(600);
+            ctx.step(2, 3, 'El NVR ya indexó cada persona por color y tipo de ropa, sentido y hora: responde en segundos.');
+            el.parentElement.querySelector('small').textContent = '3 coincidencias · 14:32 · 11:07 · 09:41'; ctx.log('ok', '3 coincidencias en 1,2 s', 'CAM 02 14:32 · CAM 05 11:07 · CAM 02 09:41');
             await wait(1400);
+            ctx.step(3, 3, 'Reproducción del clip con el atributo resaltado; exportable con un click.');
             ctx.focus([-2, 1, 1], [8, 5, 10], 1.6);
             redJacket.visible = true; redJacket.position.set(-13, 0, 6.5);
             ctx.feed({ from: [-14.3, 4.8, 0.2], lookAt: [-2, 0.5, 6.5], mode: 'color', fov: 58, label: 'CAM 02 · Clip 14:32:07' });
+            const fb = ctx.feedBox(redJacket, { label: 'CAMPERA ROJA · 98 %', cls: 'human' });
             const w = path(ctx, redJacket, [[-2, 6.5], [9, 6.5]], { speed: 2.4, bob: true });
-            await wait(1200);
-            ctx.tag(redJacket, tagHTML(S.check, 'Coincidencia 98 %', 'Campera roja · 14:32:07', 'ok'), { ttl: 3600, offsetY: 2.3 });
-            await done(w); redJacket.visible = false; ctx.feedOff();
+            await wait(1200); ctx.tag(redJacket, tagHTML(S.check, 'Coincidencia 98 %', 'Campera roja · 14:32:07', 'ok'), { ttl: 3600, offsetY: 2.3 });
+            await done(w); redJacket.visible = false; fb.remove(); ctx.feedOff(); ctx.log('ok', 'Clip exportado', '14:32:00–14:32:18 · marca de agua');
           } },
-        { id: 'lpr', icon: S.car, label: 'Ingreso vehicular ANPR', desc: 'Lee la patente en <100 ms y la barrera sube sin frenar el auto.',
+        { id: 'lpr', icon: S.car, label: 'Ingreso vehicular ANPR + barrera', desc: 'Lee la patente en <100 ms, valida lista blanca y abre la barrera sin frenar el auto.',
           async run() {
             reset(); ctx.focus([15, 1, 22], [9, 5, 9], 1.4);
-            ctx.feed({ from: lpr, lookAt: [16, 0.6, 30], mode: 'color', fov: 40, label: 'CAM ANPR · Pórtico' });
+            ctx.step(1, 4, 'Zona de lectura ANPR: la cámara DeepinView cubre el carril a 4–8 m del pórtico.');
+            const cone = ctx.cone(lpr, { fov: 40, aspect: 1.7, far: 12, color: '#FFB703' });
+            ctx.feed({ from: lpr, lookAt: [16, 0.6, 30], mode: 'color', fov: 40, label: 'CAM ANPR · Pórtico' }); await wait(1400);
             const drive = path(ctx, car, [[16, 26.5]], { speed: 5.5, ease: 'power1.out' });
-            await wait(1300);
+            const fb = ctx.feedBox(car, { label: 'VEHÍCULO', cls: 'vehicle', w: 4.4, h: 2.2 });
+            await wait(1100);
+            ctx.step(2, 4, 'Patente leída en 98 ms con marca y color; se compara con la lista blanca del edificio.');
+            fb.set('AE 123 CD · LISTA BLANCA', 'plate');
             ctx.tag(car, `<span class="plate">AE 123 CD</span><span class="tag-tx"><b>Lista blanca</b><small>Sedán · rojo · 98 ms</small></span>`, { ttl: 3800, offsetY: 1.9, cls: 'plate-tag' });
-            ctx.gsap.to(arm.rotation, { z: 1.45, duration: 1.1, ease: 'power2.inOut' });
+            ctx.log('ok', 'ANPR: AE 123 CD', 'Lista blanca · sedán rojo · 98 ms'); await wait(600);
+            ctx.step(3, 4, 'La salida de relé de la cámara levanta la barrera: el auto no frena.');
+            ctx.gsap.to(arm.rotation, { z: 1.45, duration: 1.1, ease: 'power2.inOut' }); ctx.log('ok', 'Barrera: apertura por relé', 'DS-TMG4B0 · 3 s');
             await done(drive);
             const drive2 = path(ctx, car, [[16, 14], [10, 13]], { speed: 5, ease: 'power1.inOut' });
-            await wait(1800); ctx.gsap.to(arm.rotation, { z: 0, duration: 1.2, ease: 'power2.inOut' });
-            await done(drive2); ctx.feedOff();
+            await wait(1400); ctx.step(4, 4, 'Ingreso registrado con foto y hora; la barrera baja por lazo de seguridad.');
+            ctx.gsap.to(arm.rotation, { z: 0, duration: 1.2, ease: 'power2.inOut' }); ctx.log('info', 'Ingreso registrado · dársena 7', 'Foto + patente · HikCentral');
+            await done(drive2); fb.remove(); ctx.feedOff(); await wait(600);
           } },
-        { id: 'axpro', icon: S.bell, label: 'Intrusión fuera de turno (AX PRO)', desc: 'PIR-Cam verifica con foto y dispara sirena + strobe antes de que entren.',
+        { id: 'axpro', icon: S.bell, label: 'Intrusión fuera de turno · AX PRO', desc: 'Sistema armado: el PIR-Cam verifica con foto y dispara sirena + strobe antes de que entren.',
           async run() {
             reset(); ctx.night(1, 1.4); ctx.focus([-6, 1, -16], [-8, 5, -12], 1.5);
+            ctx.step(1, 4, 'Fuera de horario el panel AX PRO queda armado en modo ausente: detectores, sirena y app conectados por Tri-X.');
+            const cone = ctx.cone(pir, { fov: 90, aspect: 1.4, far: 12, color: '#8B5CF6' });
+            ctx.log('info', 'AX PRO armado · modo ausente', '21:30 · 6 zonas · batería OK'); await wait(1600);
             intruder2.visible = true; intruder2.position.set(-14, 0, -24);
             const w = path(ctx, intruder2, [[-6, -18]], { speed: 2, bob: true }); await done(w);
-            ctx.tag(pir, tagHTML(S.eye, 'PIR-Cam: movimiento', 'Foto de verificación enviada a la app', 'warn'), { ttl: 3800, offsetY: 0.8 });
-            await wait(1300);
+            ctx.step(2, 4, 'El PIR-Cam detecta movimiento en la zona 3 y toma una foto de verificación.');
+            ctx.tag(pir, tagHTML(S.eye, 'PIR-Cam: movimiento', 'Foto de verificación enviada a la app', 'warn'), { ttl: 3800, offsetY: 0.8 }); cone.color('#FFB703');
+            ctx.log('warn', 'Zona 3 · PIR-Cam: movimiento', 'Foto enviada a Hik-Connect'); await wait(1500);
+            ctx.step(3, 4, 'Verificación visual desde el celular: sirena 110 dB + strobe y aviso a la central de monitoreo.');
             ctx.tag(siren, tagHTML(S.bell, 'Sirena 110 dB + strobe', 'Evento a central y Hik-Connect', 'danger'), { ttl: 4200, offsetY: 0.8 });
-            const st = strobe(ctx, siren, { times: 14, period: 0.22 });
-            await wait(700);
-            const run = path(ctx, intruder2, [[-16, -26]], { speed: 4.5, bob: true }); await done(run); intruder2.visible = false; await done(st);
+            const st = strobe(ctx, siren, { times: 14, period: 0.22 }); cone.color('#FF6B6B');
+            ctx.log('danger', 'Alarma de intrusión · sirena + strobe', 'Central de monitoreo notificada'); await wait(700);
+            const run = path(ctx, intruder2, [[-16, -26]], { speed: 4.5, bob: true }); await done(run); intruder2.visible = false;
+            ctx.step(4, 4, 'El intruso se retira sin entrar: queda el registro con fotos y horarios.'); ctx.log('ok', 'Evento cerrado', '2 fotos · sin daños'); await done(st);
           } },
         { id: 'network', icon: S.net, label: 'Diagnóstico de red PoE', desc: 'Topología, watchdog PoE y reinicio remoto desde Hik-Partner Pro.',
           async run() {
-            ctx.focus([-20.6, 1.2, 1.5], [3.5, 2.2, 6], 1.3); await wait(1200);
-            ctx.tag(rack, tagHTML(S.net, 'Switch DS-3E1310P-SI', 'PoE 84 W / 110 W · 8 cámaras online', 'ok'), { ttl: 3200, offsetY: 2.2 });
+            ctx.focus([-20.6, 1.2, 1.5], [3.5, 2.2, 6], 1.3);
+            ctx.step(1, 3, 'Un switch PoE gestionable alimenta las 8 cámaras y muestra la topología en Hik-Partner Pro.'); await wait(1200);
+            ctx.tag(rack, tagHTML(S.net, 'Switch DS-3E1310P-SI', 'PoE 84 W / 110 W · 8 cámaras online', 'ok'), { ttl: 3200, offsetY: 2.2 }); ctx.log('ok', 'Switch PoE: 8/8 cámaras online', '84 W de 110 W');
             await wait(2200);
-            ctx.tag(rack, tagHTML(S.alert, 'Watchdog: CAM 04 sin respuesta', 'Reinicio PoE automático…', 'warn'), { ttl: 2600, offsetY: 2.2 });
+            ctx.step(2, 3, 'Watchdog PoE: si una cámara deja de responder, el puerto se reinicia solo.');
+            ctx.tag(rack, tagHTML(S.alert, 'Watchdog: CAM 04 sin respuesta', 'Reinicio PoE automático…', 'warn'), { ttl: 2600, offsetY: 2.2 }); ctx.log('warn', 'CAM 04 sin respuesta', 'Watchdog: reinicio del puerto 4');
             await wait(2600);
-            ctx.tag(rack, tagHTML(S.check, 'CAM 04 restablecida', 'Sin intervención en sitio', 'ok'), { ttl: 2800, offsetY: 2.2 });
+            ctx.step(3, 3, 'Restablecida sin ir al sitio; el instalador recibe el aviso en la app.');
+            ctx.tag(rack, tagHTML(S.check, 'CAM 04 restablecida', 'Sin intervención en sitio', 'ok'), { ttl: 2800, offsetY: 2.2 }); ctx.log('ok', 'CAM 04 online', 'Tiempo caído: 48 s'); await wait(2400);
           } },
       ],
       reset,

@@ -42,6 +42,8 @@ export class ShowroomViewer {
     this.lamps = [];       // { light, mesh, intensity }
     this.ticks = [];       // callbacks por frame del mapa actual
     this.tweens = [];      // tweens gsap a matar al cambiar de mapa
+    this.cones = [];       // conos de cobertura visibles
+    this.feedBoxes = [];   // bounding boxes proyectadas dentro del feed
     this.night = 0;
     this.feed = { active: false, mode: 'color', camera: new THREE.PerspectiveCamera(50, 16 / 9, 0.2, 1500), split: 0.5, follow: null };
     this.clock = new THREE.Clock();
@@ -140,6 +142,9 @@ export class ShowroomViewer {
       setHeat: (obj, heat) => v.setHeat(obj, heat),
       night: (val, dur) => v.setNight(val, dur),
       focus: (pos, off, dur) => v.focus(pos, off, dur),
+      cone: (dev, o) => v.addCone(dev, o), cones: () => v.clearCones(),
+      feedBox: (target, o) => v.addFeedBox(target, o), feedBoxes: () => v.clearFeedBoxes(),
+      log: (kind, title, sub) => v.onLog?.(kind, title, sub), step: (i, n, text) => v.onStep?.(i, n, text), stepOff: () => v.onStep?.(0, 0, ''),
       get nightLevel() { return v.night; },
     };
   }
@@ -175,7 +180,7 @@ export class ShowroomViewer {
   dispose() {
     this.tweens.forEach(t => t.kill?.()); this.tweens = [];
     gsap.killTweensOf(this.camera.position); gsap.killTweensOf(this.controls.target);
-    this.ticks = []; this.lamps = [];
+    this.ticks = []; this.lamps = []; this.clearCones(); this.clearFeedBoxes(); this.onStep?.(0, 0, '');
     this.projected.forEach(p => p.el.remove()); this.projected = [];
     this.world.traverse(o => {
       if (o.isMesh) {
@@ -302,10 +307,55 @@ export class ShowroomViewer {
     }
   }
 
+  /* ---------- Cono de cobertura (frustum del lente, hijo del dispositivo) ---------- */
+  addCone(dev, { fov = 60, aspect = 1.6, far = 18, color = '#4A62D6', opacity = 0.13, sector = false, yaw = 0 } = {}) {
+    const anchor = dev.getObjectByName('head') || dev;
+    let geo;
+    if (sector) { // radar: sector plano en el suelo
+      geo = new THREE.CircleGeometry(far, 48, -THREE.MathUtils.degToRad(fov) / 2, THREE.MathUtils.degToRad(fov));
+    } else {
+      const h = Math.tan(THREE.MathUtils.degToRad(fov) / 2) * far, w = h * aspect;
+      const v = [0, 0, 0, -w, -h, far, w, -h, far, w, h, far, -w, h, far];
+      geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+      geo.setIndex([0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 1, 1, 3, 2, 1, 4, 3]); geo.computeVertexNormals();
+    }
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false }));
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.55 }));
+    mesh.userData.noSwap = true; edges.userData.noSwap = true; mesh.add(edges); mesh.name = 'cone';
+    if (sector) { mesh.rotation.x = -Math.PI / 2; mesh.rotation.z = Math.PI / 2; }
+    const wrap = new THREE.Group(); wrap.rotation.y = yaw; wrap.add(mesh); anchor.add(wrap); this.cones.push(mesh);
+    if (window.gsap) { mesh.scale.setScalar(0.001); gsap.to(mesh.scale, { x: 1, y: 1, z: 1, duration: 0.6, ease: 'power3.out' }); }
+    return { mesh, remove: () => { mesh.parent?.parent?.remove(mesh.parent); mesh.geometry.dispose(); mesh.material.dispose(); this.cones = this.cones.filter(c => c !== mesh); }, color: (c) => { mesh.material.color.set(c); edges.material.color.set(c); } };
+  }
+  clearCones() { this.cones.forEach(m => { m.parent?.parent?.remove(m.parent); m.geometry.dispose(); m.material.dispose(); }); this.cones = []; }
+
+  /* ---------- Bounding boxes dentro del feed (proyección con la cámara del feed) ---------- */
+  addFeedBox(target, { label = '', cls = 'human', w = 1.0, h = 1.9 } = {}) {
+    if (!this.feedFrame) return { remove() {} };
+    const el = document.createElement('div'); el.className = `fbox ${cls}`; el.innerHTML = `<span>${label}</span>`;
+    this.feedFrame.querySelector('.feed-view').appendChild(el);
+    const b = { target, el, w, h }; this.feedBoxes.push(b);
+    return { el, remove: () => { el.remove(); this.feedBoxes = this.feedBoxes.filter(x => x !== b); }, set: (l, c) => { el.querySelector('span').textContent = l; if (c) el.className = `fbox ${c}`; } };
+  }
+  clearFeedBoxes() { this.feedBoxes.forEach(b => b.el.remove()); this.feedBoxes = []; }
+  projectFeedBoxes() {
+    if (!this.feed.active || !this.feedBoxes.length) return;
+    const view = this.feedFrame.querySelector('.feed-view'); const W = view.clientWidth, H = view.clientHeight; const cam = this.feed.camera;
+    for (const b of this.feedBoxes) {
+      const p = this.worldPos(b.target).clone(); p.y += b.h / 2; const dist = p.distanceTo(cam.position);
+      const q = p.clone().project(cam);
+      if (q.z > 1 || Math.abs(q.x) > 1.1 || Math.abs(q.y) > 1.1) { b.el.style.display = 'none'; continue; }
+      const f = (H / 2) / Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) / dist; // px por metro a esa distancia
+      const bw = Math.max(18, b.w * f), bh = Math.max(24, b.h * f);
+      b.el.style.display = ''; b.el.style.width = bw + 'px'; b.el.style.height = bh + 'px';
+      b.el.style.transform = `translate(${((q.x * 0.5 + 0.5) * W - bw / 2).toFixed(1)}px, ${((-q.y * 0.5 + 0.5) * H - bh / 2).toFixed(1)}px)`;
+    }
+  }
+
   /* ---------- Feed de cámara (PiP) ---------- */
   setFeed(o) {
     if (!this.feedFrame) return;
-    if (!o) { this.feed.active = false; this.feedFrame.classList.remove('on'); return; }
+    if (!o) { this.feed.active = false; this.feedFrame.classList.remove('on'); this.clearFeedBoxes(); return; }
     const f = this.feed; f.active = true; f.mode = o.mode || 'color'; f.split = o.split ?? 0.5;
     f.from = o.from; f.lookAt = o.lookAt; f.camera.fov = o.fov ?? 50; f.camera.updateProjectionMatrix();
     f.label = o.label || ''; this.feedFrame.classList.add('on');
@@ -324,7 +374,7 @@ export class ShowroomViewer {
     const cam = f.camera; cam.aspect = fr.width / fr.height; cam.updateProjectionMatrix();
     const from = this.worldPos(f.from).clone(); cam.position.copy(from);
     const look = this.worldPos(f.lookAt).clone(); cam.lookAt(look);
-    const r = this.renderer; r.setScissorTest(true);
+    const r = this.renderer; r.setScissorTest(true); const coneVis = this.cones.map(c => c.visible); this.cones.forEach(c => { c.visible = false; });
     const draw = (key, x0, w0) => {
       r.setViewport(x, y, w, h); r.setScissor(x0, y, w0, h);
       const fog = this.scene.fog; const bg = this.scene.background; const skyVis = key === 'color'; this.sky.visible = skyVis; this.clouds.visible = skyVis && this.sceneMod?.clouds !== false; this.stars.visible = skyVis;
@@ -339,6 +389,7 @@ export class ShowroomViewer {
     };
     if (f.mode === 'split') { const sx = Math.round(w * f.split); draw('ir', x, sx); draw('cv', x + sx, w - sx); }
     else draw((f.mode === 'zoom' || f.mode === 'dash') ? 'color' : f.mode, x, w);
+    this.cones.forEach((c, i) => { c.visible = coneVis[i]; });
     r.setScissorTest(false); r.setViewport(0, 0, this.container.clientWidth, this.container.clientHeight);
   }
 
@@ -351,7 +402,7 @@ export class ShowroomViewer {
     for (const c of this.clouds.children) { c.position.x += dt * c.userData.speed; if (c.position.x > 180) c.position.x = -180; }
     this.project();
     this.renderer.render(this.scene, this.camera);
-    this.renderFeed();
+    this.renderFeed(); this.projectFeedBoxes();
   }
   onResize() {
     const w = this.container.clientWidth, h = this.container.clientHeight; if (!w || !h) return;

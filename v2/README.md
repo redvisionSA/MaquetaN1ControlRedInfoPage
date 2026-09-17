@@ -16,7 +16,10 @@ Abrí `v2/index.html` desde cualquier servidor estático (`python -m http.server
 - `js/catalog.js` — **única fuente de verdad**: productos (SKUs oficiales Hikvision), escenas y hotspots (`hotspot_id → tecnología → productos`). El modal ordena de mayor a menor precio.
 - `js/core.js` — tema, header compartido, carrito, toasts, card de producto.
 - `js/showroom/viewer.js` — `ShowroomViewer`: un solo canvas, hotspots HTML proyectados (sin raycasting), feed PiP con modos `color | ir | cv | th | split | zoom | dash` (swap de materiales por malla), día/noche, `dispose()` de VRAM al cambiar de mapa.
-- `js/showroom/lib.js` — constructores low-poly (edificios, vehículos, personas, cámaras, barreras, radar, etc.).
+- `js/showroom/lib.js` — constructores low-poly del entorno (edificios, vehículos, personas, props, vida ambiente: `loopPath`, `idle`, `birds`, `flag`, `windmill`).
+- `js/showroom/devices.js` — modelos fieles de los dispositivos Hikvision (bullet, turret, PTZ/TandemVu, HeatPro, PTZ térmica, ANPR, PanoVu, radar, barrera, speed gate, MinMoe, TalkVu, AX PRO, NVR/rack, kit solar, checkpoint). Sub-partes nombradas: `head`, `strobe`, `screen`, `led`, `arm`, `wingL/R`, `panel`, `cam`, `sweep`, `beam`.
+- Herramientas de relevamiento en el visor: `ctx.cone(dev, {fov, far, sector, yaw})` dibuja la cobertura del lente/radar; `ctx.feedBox(target, {label, cls})` proyecta una caja de clasificación dentro del feed; `ctx.step(i, n, texto)` y `ctx.log(kind, título, detalle)` alimentan el guion y el registro de eventos en pantalla.
+- El visor fusiona la geometría estática por material (`mergeStatic`); todo lo que se mueve o cambia de material lleva `userData.dynamic = true` (lo ponen `lib`/`devices` solos).
 - `js/showroom/scenes/*.js` — cada mapa exporta `{ id, camera, glb, build(ctx) → { hotspots, actions, reset } }`.
 
 ## Cómo agregar un dispositivo / producto
