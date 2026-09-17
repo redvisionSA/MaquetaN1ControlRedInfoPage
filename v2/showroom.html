@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Playground 3D · Showroom interactivo Hikvision | Control Red</title>
+<meta name="description" content="Probá las tecnologías Hikvision en cuatro escenarios 3D interactivos: oficinas, countries, depósitos y agro. ColorVu, AcuSense, TandemVu, térmicas, ANPR, MinMoe y más.">
+<meta name="theme-color" content="#344AB2">
+<link rel="icon" type="image/webp" href="assets/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/showroom.css">
+<script>try{const t=localStorage.getItem('cr-theme');document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){}</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+
+<div id="stage" aria-label="Escenario 3D interactivo">
+  <div id="layer"></div>
+</div>
+
+<!-- Barra superior -->
+<div class="sr-top">
+  <a class="sr-brand glass glass-pill" href="index.html" aria-label="Volver al inicio">
+    <img class="tsw-light" src="assets/logo-light.webp" alt="Control Red"><img class="tsw-dark" src="assets/logo-dark.webp" alt="">
+    <span class="divider"></span><span class="pg">Playground 3D</span>
+  </a>
+  <div class="sr-tabs glass glass-pill" id="tabs" role="tablist" aria-label="Escenarios"></div>
+  <div class="sr-actions glass glass-pill">
+    <button class="icon-btn" id="nightBtn" aria-label="Alternar día y noche en la escena" title="Día / noche">
+      <svg class="ic-sun-s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="ic-moon-s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </button>
+    <button class="icon-btn theme-toggle" aria-label="Cambiar tema de la interfaz" title="Tema claro / oscuro">
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="14" rx="3"/><path d="M8 21h8M12 18v3"/></svg>
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="14" rx="3" fill="currentColor" opacity=".25"/><path d="M8 21h8M12 18v3"/></svg>
+    </button>
+    <button class="icon-btn" data-cart-open aria-label="Abrir carrito">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+      <span class="count" data-cart-count>0</span>
+    </button>
+  </div>
+</div>
+
+<!-- Panel lateral -->
+<aside class="sr-panel glass" aria-label="Escenario y simulaciones">
+  <div class="head">
+    <span class="eyebrow" id="sceneEyebrow">—</span>
+    <h1 id="sceneName">Cargando…</h1>
+    <p id="sceneObjective"></p>
+  </div>
+  <div class="sub"><span class="eyebrow">Probá la tecnología</span><span class="chip">Causa → efecto</span></div>
+  <div class="list" id="actions"></div>
+  <div class="foot"><span>Hacé click en un punto rojo para ver los productos.</span><button class="btn btn-ghost" id="resetView">Vista general</button></div>
+</aside>
+
+<!-- Ayuda -->
+<div class="sr-hint glass glass-pill"><span>Arrastrá para orbitar</span><kbd>rueda</kbd><span>zoom</span><kbd>click derecho</kbd><span>desplazar</span></div>
+
+<!-- Feed de cámara (PiP): el canvas se dibuja debajo de .feed-view -->
+<div class="feed" id="feed" data-mode="color" aria-live="polite">
+  <div class="feed-bar glass glass-pill"><span class="rec">REC</span><span class="feed-title" data-feed-label>Cámara</span><span class="mode" data-feed-mode>VISIBLE</span><button class="icon-btn close" id="feedClose" aria-label="Cerrar vista de cámara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="feed-view">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <span class="stamp" id="stamp"></span>
+    <div class="split-ui"><span class="lbl l">IR CLÁSICO</span><span class="lbl r">COLORVU F1.0</span><span class="handle" id="splitHandle"></span><input type="range" id="splitRange" min="5" max="95" value="50" aria-label="Comparador IR vs ColorVu"></div>
+  </div>
+</div>
+
+<!-- Modal de productos -->
+<div class="modal-backdrop" id="modalBackdrop"></div>
+<div class="modal glass glass-strong" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle" aria-hidden="true">
+  <div class="m-head">
+    <div><span class="chip chip-red" id="mTech">Tecnología</span><h2 id="mTitle">—</h2><p id="mHigh"></p>
+      <div class="tier-legend"><span class="chip chip-red">Gama Pro</span><span class="chip">Gama Media</span><span class="chip">Gama Entrada</span></div></div>
+    <button class="icon-btn" id="mClose" aria-label="Cerrar y seguir explorando"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="m-body">
+    <div class="carousel">
+      <div class="nav prev"><button class="btn btn-ghost btn-icon" id="mPrev" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button></div>
+      <div class="track" id="mTrack"></div>
+      <div class="nav next"><button class="btn btn-ghost btn-icon" id="mNext" aria-label="Siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div>
+  <div class="m-foot">
+    <span class="hint" id="mCount"></span>
+    <div class="actions"><a class="btn btn-ghost" href="tienda.html">Ver tienda completa</a><button class="btn btn-primary" id="mKit">Agregar el kit completo al carrito</button></div>
+  </div>
+</div>
+
+<!-- Loader -->
+<div class="loader" id="loader"><div class="box glass"><img class="tsw-light" src="assets/logo-light.webp" alt="Control Red"><img class="tsw-dark" src="assets/logo-dark.webp" alt=""><div class="bar"><i></i></div><small id="loaderText">Preparando el showroom…</small></div></div>
+
+<script>setInterval(()=>{const s=document.getElementById('stamp');if(s)s.textContent=new Date().toLocaleString('es-AR',{hour12:false})},1000)</script>
+<script type="module" src="js/showroom/main.js"></script>
+</body>
+</html>

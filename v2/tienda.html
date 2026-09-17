@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tienda Hikvision — Cámaras, control de acceso, alarmas y más | Control Red</title>
+<meta name="description" content="Catálogo Hikvision oficial: ColorVu, AcuSense, TandemVu, térmicas HeatPro, MinMoe, AX PRO, ANPR, solares 4G. Precios referenciales, retiro en CABA y envíos a todo el país.">
+<meta name="theme-color" content="#344AB2">
+<link rel="icon" type="image/webp" href="assets/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/site.css">
+<script>try{const t=localStorage.getItem('cr-theme');document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){}</script>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+<div id="site-header"></div>
+<main>
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow">Tienda · Hikvision oficial</span>
+      <h1>Todo lo que probaste en el Playground, listo para cotizar.</h1>
+      <p>Precios referenciales en USD sin IVA. Los datasheets llevan al sitio oficial de Hikvision. ¿Dudás entre dos modelos? <a href="showroom.html" style="color:var(--accent-strong);font-weight:600">Probalos en 3D</a>.</p>
+    </div>
+  </section>
+  <section style="padding-top:0">
+    <div class="container">
+      <div class="store-tools">
+        <label class="search glass glass-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Buscar por modelo, tecnología o nombre…" aria-label="Buscar productos"></label>
+        <div class="filters" id="filters" role="group" aria-label="Categorías"></div>
+      </div>
+      <div class="store-grid" id="grid"></div>
+      <div class="store-empty" id="empty" hidden>No encontramos productos con ese filtro.</div>
+    </div>
+  </section>
+</main>
+<footer><div class="container"><div class="foot-bottom"><span>© 2026 Control Red · CABA</span><span><a href="index.html">Inicio</a> · <a href="showroom.html">Playground 3D</a></span></div></div></footer>
+<script type="module" src="js/tienda.js"></script>
+</body>
+</html>
