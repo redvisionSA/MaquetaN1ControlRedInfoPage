@@ -14,6 +14,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeLib } from './lib.js';
+import { makeDevices } from './devices.js';
 
 const gsap = window.gsap;
 
@@ -46,7 +47,7 @@ export class ShowroomViewer {
     this.clock = new THREE.Clock();
     this._tmp = new THREE.Vector3();
     this.initCore(); this.initLoaders();
-    this.lib = makeLib(THREE, RoundedBoxGeometry);
+    const base = makeLib(THREE, RoundedBoxGeometry); this.lib = { ...base, ...makeDevices(THREE, base) };
     this.animate = this.animate.bind(this);
     requestAnimationFrame(this.animate);
   }

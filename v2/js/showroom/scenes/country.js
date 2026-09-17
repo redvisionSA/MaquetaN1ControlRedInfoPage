@@ -53,18 +53,18 @@ export default {
     add(L.rbox(14, 0.5, 5.5, '#B9B5AD', 0, 5.2, 34.4, { r: 0.06 }), L.cyl(0.25, 0.3, 5.2, '#B9B5AD', -6.5, 0, 36.8), L.cyl(0.25, 0.3, 5.2, '#B9B5AD', 6.5, 0, 36.8));
     add(L.rbox(5, 0.9, 0.2, '#344AB2', 0, 5.75, 37.2, { r: 0.05 }), L.box(3, 0.24, 0.05, '#FFFFFF', 0, 6.1, 37.32));
     const barrier = add(L.barrier(-3.6, 34, 0, 7)); const arm = barrier.getObjectByName('arm');
-    const lpr = add(L.mount(-5.6, 4.6, 36.9, L.camBullet(), 0, -0.3));
-    const intercom = add(L.totem(5.2, 32.2, Math.PI)); add(L.mount(6.6, 4.6, 36.9, L.camTurret(), -Math.PI * 0.85, -0.45));
+    const lpr = add(L.mount(-5.6, 4.6, 36.9, L.camANPR(), 0, -0.3));
+    const intercom = add(L.intercom()); intercom.position.set(5.82, 1.5, 33.6); intercom.rotation.y = -Math.PI / 2; add(L.mount(6.6, 4.6, 36.9, L.camTurret(), -Math.PI * 0.85, -0.45));
     add(L.flag(ctx, -8, 38.5, ['#344AB2', '#FFFFFF'], 6), L.flag(ctx, 8, 38.5, ['#FFB703', '#FFFFFF'], 6), L.planter(-7.2, 33), L.planter(7.6, 36.5), L.bollard(-1, 38.5), L.bollard(1, 38.5));
     add(L.road(8, 30, -2, 47, 0, '#4A4E57'), L.curb(30, -6.3, 47, 0), L.curb(30, 2.3, 47, 0), L.sidewalk(3, 30, 4, 47, 0));
 
     /* ---- Dispositivos perimetrales ---- */
-    add(L.pole(-38, -28, 6)); const tandem = add(L.mount(-38, 6.1, -28, L.camPTZ('#F4F5F7', 0.34), 0, 0)); const tHead = tandem.getObjectByName('head'); const tStrobe = tandem.getObjectByName('strobe');
+    add(L.pole(-38, -28, 6)); const tandem = add(L.mount(-38, 6.1, -28, L.camPTZ('#F2F3F5', 0.34, { tandem: true, wiper: true }), 0, 0)); const tHead = tandem.getObjectByName('head'); const tStrobe = tandem.getObjectByName('strobe');
     const tLight = L.spot('#FFFFFF', 0, 0.35, 60); tLight.position.set(-38, 6, -28); add(tLight, tLight.target); tLight.target.position.set(-20, 0.5, -34);
     const radar = add(L.radar(-28, -28.5, 3.6)); const sweep = radar.getObjectByName('sweep'), beam = radar.getObjectByName('beam');
     add(L.pole(12, -30.5, 4)); const heat = add(L.mount(12, 4.1, -30.5, L.camThermal(), -Math.PI / 2, -0.28));
     const vline = add(L.zone(28, 0.25, -4, -31.2, '#FF3B30', 0.55)); vline.visible = false;
-    add(L.pole(0, 1.5, 6.5)); const pano = add(L.mount(0, 6.6, 1.5, L.camTurret('#F4F5F7'), 0, -0.9)); pano.scale.setScalar(1.6);
+    add(L.pole(0, 1.5, 6.5)); const pano = add(L.mount(0, 6.6, 1.5, L.camPanoVu(), 0, 0));
     const deter = add(L.mount(16, 3.3, 5.2, L.camBullet(), Math.PI, -0.4)); const dStrobe = L.siren(16.6, 3.3, 5.2); add(dStrobe);
 
     /* ---- Actores ---- */
@@ -100,7 +100,7 @@ export default {
         { id: 'country_lpr', target: lpr, offsetY: 0.7, offset: [6, 3, 7] },
         { id: 'country_panovu', target: pano, offsetY: 0.9, offset: [5, 3, 6] },
         { id: 'country_deter', target: deter, offsetY: 0.7, offset: [-5, 2.5, 5] },
-        { id: 'country_intercom', target: intercom, offsetY: 1.9, offset: [4, 2, -5] },
+        { id: 'country_intercom', target: intercom, offsetY: 0.6, offset: [-4, 2, 3] },
       ],
       actions: [
         { id: 'radar', icon: S.radar, label: 'Intrusión nocturna: radar + TandemVu', desc: 'El radar barre 120 m, detecta el vector y la PTZ gira, enciende strobe y sigue al objetivo.',
@@ -157,11 +157,11 @@ export default {
           } },
         { id: 'intercom', icon: S.door, label: 'Visita en el pórtico (TalkVu)', desc: 'El residente atiende desde el celular y abre remoto; queda registro con foto.',
           async run() {
-            reset(); ctx.focus([5.2, 1, 32.5], [5, 3, 7], 1.4); guest.visible = true; guest.position.set(9, 0, 40);
-            const w = path(ctx, guest, [[6.4, 34.5]], { speed: 2.2, bob: true }); await done(w);
-            ctx.tag(intercom, tagHTML(S.door, 'Llamada → Hik-Connect', 'Residente lote 14 · video 2 MP HDR', 'warn'), { ttl: 3200, offsetY: 1.9 });
-            await wait(2400); ctx.tag(intercom, tagHTML(S.check, 'Apertura remota', 'Registro con foto · 18:42', 'ok'), { ttl: 3000, offsetY: 1.9 });
-            const w2 = path(ctx, guest, [[6.4, 28], [8, 22]], { speed: 2.2, bob: true }); await done(w2); guest.visible = false;
+            reset(); ctx.focus([5.4, 1.2, 33.6], [-4, 2.5, 4], 1.4); guest.visible = true; guest.position.set(4, 0, 42);
+            const w = path(ctx, guest, [[5.0, 33.6]], { speed: 2.2, bob: true }); await done(w);
+            ctx.tag(intercom, tagHTML(S.door, 'Llamada → Hik-Connect', 'Residente lote 14 · video 2 MP HDR', 'warn'), { ttl: 3200, offsetY: 0.6 });
+            await wait(2400); ctx.tag(intercom, tagHTML(S.check, 'Apertura remota', 'Registro con foto · 18:42', 'ok'), { ttl: 3000, offsetY: 0.6 });
+            const w2 = path(ctx, guest, [[4.6, 28], [8, 22]], { speed: 2.2, bob: true }); await done(w2); guest.visible = false;
           } },
       ],
       reset,

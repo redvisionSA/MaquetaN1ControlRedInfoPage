@@ -40,7 +40,7 @@ export default {
     /* ---- Predio: cerco, portón, oficina, contenedores, tanques ---- */
     add(L.fence(-60, -40, 60, -40, 2.4), L.fence(-60, -40, -60, 50, 2.4), L.fence(60, -40, 60, 50, 2.4), L.fence(-60, 50, 30, 50, 2.4), L.fence(42, 50, 60, 50, 2.4));
     add(L.guardBooth(45, 46, Math.PI)); add(L.canopy(10, 7, 36, 45.5, 4.6, '#EDE9E1')); const barrier = add(L.barrier(31, 47.5, 0, 8)); const arm = barrier.getObjectByName('arm');
-    add(L.pole(41, 44.5, 4.2)); const speedCam = add(L.mount(41, 4.3, 44.5, L.camBullet(), Math.PI * 0.5, -0.3));
+    add(L.pole(41, 44.5, 4.2)); const speedCam = add(L.mount(41, 4.3, 44.5, L.checkpoint(), Math.PI * 0.5, -0.3));
     add(L.road(10, 34, 36, 62, Math.PI / 2, '#4A4D55'), L.road(10, 40, 36, 30, Math.PI / 2, '#4A4D55', { edge: false }));
     add(L.zebra(10, 36, 40, Math.PI / 2), L.sign(42, 41, -Math.PI / 2, '#E2231A'), L.coneT(31.5, 42), L.bollard(30.5, 44.4), L.bollard(41.5, 49.5));
     add(L.building(16, 4.2, 9, -48, -22, '#E9E5DD', { floors: 1, cols: 5, band: '#344AB2' })); add(L.plane(8, 10, '#CFCAC0', -36, 0.03, -22)); // oficina administrativa
@@ -60,7 +60,7 @@ export default {
     /* ---- Cámaras / dispositivos ---- */
     const colorvu = add(L.mount(-14.6, H - 1.4, Z + D / 2 - 0.6, L.camTurret(), Math.PI * 0.85, -0.55)); colorvu.scale.setScalar(1.4);
     const thermal = add(L.mount(W / 2 - 0.6, H - 1.2, Z + D / 2 - 1, L.camThermal(), -Math.PI * 0.7, -0.5));
-    const minmoe = add(L.totem(20.2, Z + D / 2 + 0.7, 0));
+    const minmoe = add(L.minmoe({ stand: false, big: false })); minmoe.position.set(19.5, 1.5, Z + D / 2 + 0.1);
     add(L.mount(-W / 2 + 0.6, H - 1.2, Z + D / 2 - 1, L.camBullet(), Math.PI * 0.7, -0.5));
     add(L.mount(0, H - 0.6, Z - D / 2 + 0.6, L.camBullet(), 0, -0.5));
     const nvr = add(L.nvrBox(46.4, 1.0, 46.5)); nvr.rotation.y = Math.PI;
@@ -68,7 +68,7 @@ export default {
     /* ---- Vehículos y personas ---- */
     const truck = add(L.truck('#E2231A')); truck.position.set(58, 0, 20); truck.rotation.y = Math.PI;
     const truck2 = add(L.truck('#3A6BD8')); truck2.position.set(5, 0, Z + D / 2 + 6.5); truck2.rotation.y = Math.PI / 2;
-    const fork = add(L.forklift()); fork.position.set(-6, 0, Z + 6); const forkCam = new THREE.Object3D(); forkCam.position.set(0.9, 2.1, 0); fork.add(forkCam);
+    const fork = add(L.forklift()); fork.position.set(-6, 0, Z + 6); const forkCam = L.dashcam(); forkCam.position.set(0.55, 2.05, 0); forkCam.rotation.y = Math.PI / 2; fork.add(forkCam);
     const worker = add(L.person('#F5B400', '#2B2F3A')); worker.position.set(22, 0, 8);
     const worker2 = add(L.person('#F5B400', '#2B2F3A')); worker2.position.set(-8, 0, Z + 3);
     const intruder = add(L.person('#2B2F3A', '#1A1C24')); intruder.visible = false;
@@ -91,7 +91,7 @@ export default {
         { id: 'wh_thermal', target: thermal, offsetY: 0.7, offset: [-6, 3, 7] },
         { id: 'wh_speed', target: speedCam, offsetY: 0.7, offset: [6, 3, 7] },
         { id: 'wh_mdvr', target: fork, offsetY: 2.4, offset: [5, 3, 7] },
-        { id: 'wh_access', target: minmoe, offsetY: 1.9, offset: [4, 2.5, 6] },
+        { id: 'wh_access', target: minmoe, offsetY: 0.6, offset: [4, 2.5, 6] },
         { id: 'wh_acusense', target: nvr, offsetY: 1.2, offset: [-4, 2.5, -6] },
       ],
       actions: [
@@ -140,7 +140,7 @@ export default {
             reset(); ctx.focus([20, 1, Z + D / 2 + 1], [5, 3, 7], 1.4);
             const w = path(ctx, worker, [[21, 4], [20.6, Z + D / 2 + 2.2]], { speed: 2.4, bob: true }); await done(w);
             ctx.tag(worker, `<span class="face-ring"></span>`, { ttl: 1500, offsetY: 1.75, cls: 'bare' }); await wait(1000);
-            ctx.tag(minmoe, tagHTML(S.check, 'Turno mañana · autorizado', 'Operario 117 · 0,2 s', 'ok'), { ttl: 3000, offsetY: 1.9 });
+            ctx.tag(minmoe, tagHTML(S.check, 'Turno mañana · autorizado', 'Operario 117 · 0,2 s', 'ok'), { ttl: 3000, offsetY: 0.6 });
             ctx.gsap.to(accessDoor.position, { y: 3.4, duration: 0.8, ease: 'power2.inOut' }); await wait(700);
             const w2 = path(ctx, worker, [[18.5, Z + D / 2 - 2]], { speed: 2.2, bob: true }); await done(w2);
             ctx.gsap.to(accessDoor.position, { y: 1.15, duration: 0.8 });

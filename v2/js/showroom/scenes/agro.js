@@ -54,8 +54,8 @@ export default {
     /* ---- Dispositivos ---- */
     const solar = add(L.camSolar(8, 12, 4.6, Math.PI * 0.75)); const panel = solar.getObjectByName('panel'); const solarCam = solar.getObjectByName('cam');
     const sStrobe = L.siren(0, 3.5, 0.32); solar.add(sStrobe); const sLight = L.spot('#FFFFFF', 0, 0.5, 30); sLight.position.set(8, 4.2, 12); add(sLight, sLight.target); sLight.target.position.set(22, 0.5, 8);
-    add(L.pole(-24, -8, 9)); const ptz = add(L.mount(-24, 9.1, -8, L.camPTZ('#F4F5F7', 0.36), 0, 0));
-    add(L.cyl(0.4, 0.6, 12, '#8A8F9C', -40, 0, -34, 6), L.box(1.2, 0.2, 1.2, '#8A8F9C', -40, 12, -34)); const tptz = add(L.mount(-40, 12.3, -34, L.camPTZ('#F4F5F7', 0.34), 0, 0));
+    add(L.pole(-24, -8, 9)); const ptz = add(L.mount(-24, 9.1, -8, L.camPTZ('#F2F3F5', 0.36, { wiper: true }), 0, 0));
+    add(L.cyl(0.4, 0.6, 12, '#8A8F9C', -40, 0, -34, 6), L.box(1.2, 0.2, 1.2, '#8A8F9C', -40, 12, -34)); const tptz = add(L.mount(-40, 12.2, -34, L.thermalPTZ(), 0, 0));
     const radar = add(L.radar(4, -22, 4)); const sweep = radar.getObjectByName('sweep'), beam = radar.getObjectByName('beam');
     const dish = (x, y, z, r) => { const d = L.rbox(0.6, 0.6, 0.08, '#F4F5F7', x, y, z, { r: 0.04 }); d.rotation.y = r; return d; };
     const link1 = add(dish(-26, 6.4, -2, Math.PI / 2)); add(dish(-40, 5.4, -22, -Math.PI / 2)); add(L.cyl(0.05, 0.05, 1.2, '#4A4F66', -26, 6, -2, 6), L.cyl(0.05, 0.05, 1.2, '#4A4F66', -40, 5, -22, 6));

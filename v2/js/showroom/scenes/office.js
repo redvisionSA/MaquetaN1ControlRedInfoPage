@@ -56,7 +56,7 @@ export default {
     add(L.rbox(6, 3.2, 5, '#E1DDD5', -19, 0, 3, { r: 0.08 }), L.rbox(6.4, 0.3, 5.4, '#B9B5AD', -19, 3.2, 3, { r: 0.05 }), L.box(6.5, 0.4, 5.5, '#344AB2', -19, 2.6, 3));
     add(L.box(5.6, 2.6, 0.08, '#CFE3F2', -19, 0.3, 5.55, { roughness: 0.1, transparent: true, opacity: 0.35 }));
     const rack = add(L.rack(-20.6, 1.5)); const nvr = add(L.nvrBox(-18.4, 1.2, 1.6)); add(L.rbox(1.2, 1.1, 0.6, '#2A2E3A', -18.4, 0, 1.6, { r: 0.03 }));
-    add(L.screenPanel(-17.6, 2.1, 1.2, 0.25), L.screenPanel(-19.3, 2.1, 1.0, -0.1));
+    add(L.screenPanel(-17.6, 1.9, 1.2, 0.25), L.screenPanel(-19.3, 1.9, 1.0, -0.1)); const hub = add(L.axHub()); hub.position.set(-21.4, 2.0, 2.2); hub.rotation.y = Math.PI / 2;
     add(L.person('#344AB2', '#2B2F3A')).position.set(-18.4, 0, 3.6); // operador
 
     /* ---- Garita y barrera ---- */
@@ -74,11 +74,11 @@ export default {
     /* ---- Cámaras y alarma ---- */
     const hybrid = add(L.mount(14.2, 4.8, 0.2, L.camBullet(), -Math.PI / 4, -0.35));
     const hybridLight = L.spot('#FFFFFF', 0, 0.42, 32); hybridLight.position.set(14.2, 4.8, 0.2); hybridLight.target.position.set(6, 0.5, 8); add(hybridLight, hybridLight.target);
-    const lpr = add(L.mount(15.7, 3.4, 24.5, L.camBullet(), 0, -0.25)); add(L.pole(15.7, 24.5, 3.4));
+    const lpr = add(L.mount(15.7, 3.4, 24.5, L.camANPR(), 0, -0.25)); add(L.pole(15.7, 24.5, 3.5));
     add(L.mount(-14.3, 4.8, 0.2, L.camTurret(), Math.PI / 4, -0.4));
     add(L.mount(0, 5.5, -15.1, L.camTurret(), Math.PI, -0.5));
     add(L.mount(20, 2.7, 22.9, L.camBullet(), -Math.PI * 0.75, -0.3));
-    const siren = add(L.siren(-12.5, 4.3, -0.9)); siren.userData.dynamic = true; const pir = add(L.mount(-6, 4.6, -15.1, L.camTurret('#F4F5F7'), Math.PI, -0.6));
+    const siren = add(L.siren(-12.5, 4.3, -0.9)); siren.userData.dynamic = true; const pir = add(L.mount(-6, 4.4, -15.1, L.pirCam(), Math.PI, -0.3));
 
     /* ---- Actores de las simulaciones ---- */
     const car = add(L.car('#B8362E', 'AE 123 CD')); car.position.set(16, 0, 42); car.rotation.y = Math.PI / 2;
