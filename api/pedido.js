@@ -39,6 +39,7 @@
  */
 
 import { registrar } from './_popularidad.js'
+import { claveDeCorreo, claveDeRed, consumir, LIMITES } from './_limites.js'
 
 function configuracion(req) {
   const env = req?.env || globalThis.process?.env || {}
@@ -142,6 +143,42 @@ async function leerCuenta(cuentasUrl, autorizacion) {
   }
 }
 
+/**
+ * Copia del pedido para el cliente, o null si no corresponde mandarla.
+ *
+ * El correo lo escribe quien completa el formulario, sin verificar: mandar
+ * ahi el pedido completo (nombre, comentarios y direccion son texto libre)
+ * convertiria la tienda en un relevo de correos hacia terceros. Por eso:
+ *   - con sesion del ERP y el mismo correo de la cuenta: copia completa;
+ *   - sin eso: plantilla fija (solo el numero, nada que escriba el
+ *     visitante), y solo si hay base para limitar por red y por correo.
+ */
+async function copiaAlCliente(env, { sesion, cliente, ip, numero, html, textoPlano }) {
+  const correoCuenta = sesion && !sesion.error ? String(sesion.cuenta?.email || '').trim().toLowerCase() : ''
+  const esSuCuenta = Boolean(correoCuenta) && correoCuenta === cliente.email.trim().toLowerCase()
+  const asunto = `Recibimos tu pedido ${numero} — Control Red`
+
+  if (esSuCuenta) {
+    return {
+      subject: asunto,
+      html: `<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:640px;color:#111;"><p>Recibimos tu pedido <b>${numero}</b>. Un asesor te confirma stock, precio final y envío, y te pasa los datos de pago. No se realizó ningún cobro.</p>${html}</div>`,
+      text: textoPlano,
+    }
+  }
+
+  const porRed = await consumir(env, await claveDeRed(env, 'copia', ip), LIMITES.copiasPorRed)
+  if (porRed !== true) return null
+  const porCorreo = await consumir(env, await claveDeCorreo(env, 'copia', cliente.email), LIMITES.copiasPorCorreo)
+  if (porCorreo !== true) return null
+
+  const mensaje = `Recibimos tu pedido ${numero} en controlred.com.ar. Un asesor te confirma stock, precio final y envío, y te pasa los datos de pago. No se realizó ningún cobro. Si no hiciste este pedido, ignorá este correo.`
+  return {
+    subject: asunto,
+    html: `<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:640px;color:#111;"><p>${escaparHtml(mensaje)}</p><p style="color:#666;font-size:13px;">Control Red · Av. Gaona 3565, Flores, CABA</p></div>`,
+    text: `${mensaje}\n\nControl Red · Av. Gaona 3565, Flores, CABA`,
+  }
+}
+
 async function enviarCorreo(apiKey, cuerpo) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -212,6 +249,21 @@ export default async function handler(req, res) {
     return res.status(500).json({
       ok: false,
       error: 'El envío de pedidos no está configurado todavía. Envialo por WhatsApp con el botón de abajo.',
+    })
+  }
+
+  /* Tope de pedidos por red y por dia: el endpoint no pide sesion y cada
+     pedido es un correo a ventas. Si la base falla, el pedido sigue (no se
+     pierde una venta por la estadistica). */
+  const ip = req.headers?.['cf-connecting-ip']
+  const permitido = await consumir(req.env, await claveDeRed(req.env, 'pedido', ip), LIMITES.pedidosPorRed).catch((error) => {
+    console.error('[api/pedido] Límite no verificado:', error.message)
+    return null
+  })
+  if (permitido === false) {
+    return res.status(429).json({
+      ok: false,
+      error: 'Recibimos muchos pedidos desde tu conexión hoy. Envialo por WhatsApp con el botón de abajo.',
     })
   }
 
@@ -327,20 +379,22 @@ export default async function handler(req, res) {
      el pedido ya llego a ventas: no se informa error al cliente. Se espera
      la respuesta porque la funcion se congela al responder. */
   if (dominioVerificado) {
-    await enviarCorreo(apiKey, {
-      from: remitente,
-      to: [cliente.email],
-      subject: `Recibimos tu pedido ${numero} — Control Red`,
-      html: `<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:640px;color:#111;"><p>Hola ${escaparHtml(cliente.nombre)}, recibimos tu pedido <b>${numero}</b>. Un asesor te confirma stock, precio final y envío, y te pasa los datos de pago. No se realizó ningún cobro.</p>${html}</div>`,
-      text: textoPlano,
-    }).catch((error) => console.error('[api/pedido] Copia al cliente no enviada:', error.message))
+    const copia = await copiaAlCliente(req.env, { sesion, cliente, ip, numero, html, textoPlano }).catch((error) => {
+      console.error('[api/pedido] Límite de la copia no verificado:', error.message)
+      return null
+    })
+    if (copia) {
+      await enviarCorreo(apiKey, { from: remitente, to: [cliente.email], ...copia }).catch((error) =>
+        console.error('[api/pedido] Copia al cliente no enviada:', error.message)
+      )
+    }
   }
 
   /* Popularidad: solo productos que el catalogo confirmo (nunca ids inventados).
      Un fallo de la estadistica no afecta al pedido, que ya llego a ventas. */
   const confirmados = limpios.filter((i, k) => lineas[k].publicado === true).map((i) => i.id)
   if (confirmados.length) {
-    await registrar(req.env, { tipo: 'pedido', ids: confirmados, ip: req.headers?.['cf-connecting-ip'] }).catch((error) =>
+    await registrar(req.env, { tipo: 'pedido', ids: confirmados, ip }).catch((error) =>
       console.error('[api/pedido] Popularidad no registrada:', error.message)
     )
   }

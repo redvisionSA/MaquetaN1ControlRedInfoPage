@@ -41,7 +41,8 @@ export function redDeIp(ip) {
   return `${grupos.slice(0, 4).map((g) => g || '0').join(':')}::/64`
 }
 
-async function hash(texto) {
+/** SHA-256 recortado a 12 bytes en hex (tambien lo usa api/_limites.js). */
+export async function hashCorto(texto) {
   const datos = new TextEncoder().encode(texto)
   const digest = await crypto.subtle.digest('SHA-256', datos)
   return [...new Uint8Array(digest)].slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('')
@@ -72,7 +73,7 @@ export async function idsDelCatalogo(env) {
 export async function registrar(env, { tipo, ids, ip }) {
   if (!env?.DB || !PESOS[tipo] || !ids.length) return 0
   const dia = diaArgentina()
-  const origen = await hash(`${redDeIp(ip)}|${dia}|${env.POPULARIDAD_SAL || 'controlred-web'}`)
+  const origen = await hashCorto(`${redDeIp(ip)}|${dia}|${env.POPULARIDAD_SAL || 'controlred-web'}`)
 
   const fila = await env.DB.prepare('SELECT COUNT(*) AS n FROM eventos WHERE dia = ?1 AND origen = ?2').bind(dia, origen).first()
   const libres = TOPE_DIARIO - Number(fila?.n || 0)

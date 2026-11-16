@@ -43,7 +43,7 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
 | Inicio | `src/paginas/Inicio.jsx`: hero → departamentos → carrusel → tecnologías (cada tarjeta enlaza a `/productos?q=…`) → marcas → respaldo → banda mayorista → proyectos/capacitaciones (reducido) → ubicación y canales → preguntas → banda CTA. |
 | Tienda (motores de RV) | `src/tienda/*` (catálogo, búsqueda y facetas, buscador, líneas, marcas, similares/compatibles, disponibilidad, carrito, WhatsApp, popularidad), `src/cuenta/*`, `src/paginas/{Catalogo,Producto,Carrito,Favoritos,Cuenta}.jsx` |
 | Datos de contacto | `src/datos/empresa.js` (fuente única; el JSON-LD de `index.html` es manual) |
-| Servidor | `api/pedido.js` (Resend, número `CR-W-AAMMDD-XXXXX`), `api/_popularidad.js`, `functions/` (adaptador `_vercel.js`, `api/pedido`, `api/evento`, `api/populares`) |
+| Servidor | `api/pedido.js` (Resend, número `CR-W-AAMMDD-XXXXX`), `api/_popularidad.js`, `api/_limites.js`, `functions/` (adaptador `_vercel.js`, `api/pedido`, `api/evento`, `api/populares`) |
 
 ### Diferencias con la tienda de RV
 - **Líneas** (`lineas.jsx`): las cuatro familias de la v1 + energía + accesorios: `cctv`, `accesos`,
@@ -60,6 +60,11 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
   manda `busqueda`/`carrito`; `pedido` lo registra `api/pedido.js` tras enviar el correo y solo con ids
   que el catálogo confirmó; `evento.js` valida ids contra el catálogo; el visitante es el /64 de su
   IPv6 (o su IPv4) y tiene un tope de 40 gestos por día.
+- **Pedidos sin relevo de correo** (`api/_limites.js`, tabla `limites` de D1): tope de 20 pedidos por
+  red y por día (429 → WhatsApp). La copia al cliente (solo con `RESEND_FROM`) es completa únicamente
+  si hay sesión del ERP con el mismo correo de la cuenta; si no, plantilla fija con solo el número
+  (nada del texto libre), a lo sumo 5 por red y 3 por correo por día, y sin D1 no sale. Turnstile
+  queda como mejora si aparece abuso.
 
 ## ERP
 - Catálogo: `GET https://api-erp.redvision.com.ar/storefront/controlred/catalog`, **en producción**
@@ -76,8 +81,9 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
    (hoy en vivo: `cb6f761`, la v1).
 2. Desde un worktree limpio de la rama aprobada: `npm ci && npm run build`.
 3. Variables del proyecto en Pages: `RESEND_API_KEY` (sin ella los pedidos ofrecen WhatsApp),
-   opcionales `RESEND_FROM`, `PEDIDOS_EMAIL_DESTINO`; D1 `DB` con `docs/popularidad.sql` y
-   `POPULARIDAD_SAL` (sin la base el carrusel cae a destacados).
+   opcionales `RESEND_FROM`, `PEDIDOS_EMAIL_DESTINO`; D1 `DB` con `docs/popularidad.sql` (tablas
+   `eventos` y `limites`) y `POPULARIDAD_SAL` (sin la base el carrusel cae a destacados, los pedidos
+   no tienen tope y no sale la copia a correos sin sesión).
 4. `npx wrangler pages deploy dist --project-name controlred-web --branch main --commit-hash <sha>`.
 5. Para volver atrás: Cloudflare → `controlred-web` → Deployments → «Rollback» al deploy de `cb6f761`.
 

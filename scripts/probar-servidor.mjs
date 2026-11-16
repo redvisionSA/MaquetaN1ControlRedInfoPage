@@ -15,14 +15,23 @@ assert.deepEqual(idsValidos(['a-1', 'a-1', '../x', 'b2']), ['a-1', 'b2'])
 // --- D1 simulada
 function d1() {
   const filas = []
+  const limites = new Map()
   return {
     filas,
+    limites,
     prepare(sql) {
       return {
         bind(...v) {
           return {
             sql, v,
-            async first() { return { n: filas.filter((f) => f.dia === v[0] && f.origen === v[1]).length } },
+            async first() {
+              if (sql.includes('INTO limites')) {
+                const k = v[0] + '|' + v[1]
+                limites.set(k, (limites.get(k) || 0) + 1)
+                return { n: limites.get(k) }
+              }
+              return { n: filas.filter((f) => f.dia === v[0] && f.origen === v[1]).length }
+            },
           }
         },
       }
@@ -47,6 +56,8 @@ globalThis.fetch = async (url, op = {}) => {
       { id: 'p2', name: 'NVR 8', sku: 'DS-2', price: '250000.50' },
     ] }), { status: 200 })
   }
+  if (String(url).endsWith('/shop/controlred/me')) return new Response(JSON.stringify({ name: 'Ana SRL', email: 'ANA@ejemplo.com', username: '30111' }), { status: 200 })
+  if (String(url).endsWith('/shop/controlred/me/prices')) return new Response(JSON.stringify({ priceTier: 'GREMIO', prices: [] }), { status: 200 })
   if (String(url).includes('api.resend.com')) { correos.push(JSON.parse(op.body)); return new Response('{}', { status: 200 }) }
   throw new Error('URL inesperada ' + url)
 }
@@ -107,4 +118,55 @@ const cliente = { nombre: 'Ana', telefono: '1122334455', email: 'ana@ejemplo.com
   for (let i = 0; i < 6; i++) await registrar(env, { tipo: 'busqueda', ids: Array.from({ length: 10 }, (_, k) => `x${i}-${k}`), ip: '1.1.1.1' })
   assert.equal(DB.filas.length, TOPE_DIARIO)
 }
-console.log('OK: pedido, evento y popularidad')
+// 5) Tope de pedidos por red: el 21 del dia responde 429
+{
+  const DB = d1()
+  const env = { RESEND_API_KEY: 'test', DB }
+  let ultimo
+  for (let i = 0; i < 21; i++) {
+    ultimo = res()
+    await pedido({ method: 'POST', headers: { 'cf-connecting-ip': '9.9.9.9' }, env, body: JSON.stringify({ cliente, items: [{ id: 'p1', cantidad: 1 }] }) }, ultimo)
+  }
+  assert.equal(ultimo.r.code, 429)
+  assert.match(ultimo.r.body.error, /WhatsApp/)
+}
+
+// 6) Copia al cliente sin sesion: plantilla fija (nada del texto libre), con tope por correo
+{
+  const DB = d1()
+  const env = { RESEND_API_KEY: 'test', RESEND_FROM: 'Tienda <t@controlred.com.ar>', DB }
+  const malicioso = { ...cliente, email: 'victima@ejemplo.com', nombre: '<a href="https://phish">Ganaste</a>', comentarios: 'Hacé clic en https://phish' }
+  const copias = () => correos.filter((c) => c.to[0] === 'victima@ejemplo.com')
+  const antes = copias().length
+  for (let i = 0; i < 5; i++) {
+    await pedido({ method: 'POST', headers: { 'cf-connecting-ip': '200.0.0.' + i }, env, body: JSON.stringify({ cliente: malicioso, items: [{ id: 'p1', cantidad: 1 }] }) }, res())
+  }
+  const nuevas = copias().slice(antes)
+  assert.equal(nuevas.length, 3, 'a lo sumo 3 copias por correo y por dia')
+  for (const c of nuevas) {
+    assert.doesNotMatch(c.html + c.text, /phish|Ganaste|Cámara/)
+    assert.match(c.text, /^Recibimos tu pedido CR-W-/)
+  }
+}
+
+// 7) Sin base no hay como limitar: la copia a un correo no verificado no sale
+{
+  const env = { RESEND_API_KEY: 'test', RESEND_FROM: 'Tienda <t@controlred.com.ar>' }
+  const antes = correos.length
+  const x = res()
+  await pedido({ method: 'POST', headers: {}, env, body: JSON.stringify({ cliente, items: [{ id: 'p1', cantidad: 1 }] }) }, x)
+  assert.equal(x.r.code, 200)
+  assert.equal(correos.length - antes, 1, 'solo el correo a ventas')
+}
+
+// 8) Con sesion y el mismo correo de la cuenta: copia completa (aun sin base)
+{
+  const env = { RESEND_API_KEY: 'test', RESEND_FROM: 'Tienda <t@controlred.com.ar>' }
+  const antes = correos.length
+  await pedido({ method: 'POST', headers: { authorization: 'Bearer token-de-prueba-123' }, env, body: JSON.stringify({ cliente, items: [{ id: 'p1', cantidad: 1 }] }) }, res())
+  const nuevos = correos.slice(antes)
+  assert.equal(nuevos.length, 2)
+  assert.equal(nuevos[1].to[0], 'ana@ejemplo.com')
+  assert.match(nuevos[1].html, /Cámara ColorVu/)
+}
+console.log('OK: pedido, evento, popularidad y límites')

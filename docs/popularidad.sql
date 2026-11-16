@@ -11,3 +11,13 @@ CREATE TABLE IF NOT EXISTS eventos (
   PRIMARY KEY (dia, producto, tipo, origen)
 );
 CREATE INDEX IF NOT EXISTS eventos_dia ON eventos (dia);
+
+-- Topes diarios de /api/pedido (api/_limites.js): pedidos por red y copias al
+-- cliente por red y por correo. `clave` es un hash recortado, nunca la IP ni
+-- el correo en claro. Se puede vaciar sin perder nada (solo cuenta el dia).
+CREATE TABLE IF NOT EXISTS limites (
+  dia   TEXT NOT NULL,     -- AAAA-MM-DD, hora de Argentina
+  clave TEXT NOT NULL,     -- tipo:red|correo:hash
+  n     INTEGER NOT NULL,  -- intentos del dia
+  PRIMARY KEY (dia, clave)
+);

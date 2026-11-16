@@ -22,6 +22,10 @@ export async function onRequestGet({ env }) {
 
   if (Math.random() < 0.02) {
     await env.DB.prepare(`DELETE FROM eventos WHERE dia < date('now', '-30 days')`).run()
+    /* Topes de /api/pedido: solo importa el dia en curso */
+    await env.DB.prepare(`DELETE FROM limites WHERE dia < date('now', '-3 days')`)
+      .run()
+      .catch(() => {})
   }
 
   return new Response(JSON.stringify({ ids: (results || []).map((r) => r.producto), dias: 7 }), { headers: cabeceras })
