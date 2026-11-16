@@ -1,28 +1,21 @@
-# ControlRed — Maqueta N1 (Info Page)
+# Control Red — tienda en línea
 
-Sitio informativo de una sola pagina para ControlRed, distribuidor argentino de seguridad electronica — Powered by Hikvision.
+Tienda de seguridad electrónica de Control Red (controlred.com.ar): catálogo del ERP en solo lectura,
+carrito que envía el pedido por correo o WhatsApp (sin cobro en línea), búsqueda tolerante con filtros,
+disponibilidad visible y cuentas de clientes con precios de su lista. Conserva el hero 3D y el showroom
+de tecnologías Hikvision de la web anterior.
 
-## Contenido
-- index.html: sitio completo, autocontenido (HTML + CSS + JS embebidos, imagenes en base64). No requiere build ni dependencias.
+## Comandos
 
-## Stack
-- HTML / CSS / JS vanilla
-- Three.js (via CDN) para la animacion 3D del hero
-- Sin frameworks, sin paso de build
+```
+npm install
+npm run dev       # http://localhost:5190 (sin variables: catálogo de demostración)
+npm run build     # dist/
+npm run probar    # pruebas del pedido y la popularidad (servidor)
+```
 
-## Despliegue en Vercel
-Sitio 100% estatico con un unico index.html en la raiz. Vercel lo detecta automaticamente como proyecto Other, sin configuracion adicional.
+Stack: Vite + React + Tailwind; three r128 y GSAP solo en el inicio. Cloudflare Pages (proyecto
+`controlred-web`) con Pages Functions en `functions/`. Variables: `.env.example`.
 
-1. En vercel.com/new, elegi Import Git Repository y seleccioná este repo.
-2. Framework Preset: Other.
-3. Build Command / Output Directory: vacios.
-4. Deploy.
-
-## Estado
-Maqueta de prueba N1. El archivo index.html (~1.2MB, con logos embebidos) se sube por separado via git:
-
-git clone https://github.com/redvisionSA/MaquetaN1ControlRedInfoPage.git
-cd MaquetaN1ControlRedInfoPage
-git add index.html
-git commit -m "maquetan1"
-git push
+La memoria del proyecto (decisiones, reglas, cómo publicar) está en `CLAUDE.md`. La web anterior
+(un solo `index.html`) quedó en `legado/index-v1.html`.

@@ -1,1 +1,6 @@
 videoTestHik.mp4
+node_modules/
+dist/
+.env.local
+.wrangler/
+.env.development.local

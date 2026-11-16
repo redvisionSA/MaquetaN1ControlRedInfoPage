@@ -1,0 +1,193 @@
+<!-- ============ SHOWROOM HIKVISION — TECNOLOGÍAS CORE (carrusel 3D Liquid Glass) ============ -->
+<section class="tech v1-seccion" id="tecnologias" style="--tech:var(--hik-colorvu)">
+  <div class="container">
+    <div class="tech-head">
+      <div class="tech-kicker">
+        <img class="tsw-light" src="/img/hikvision-claro.webp" alt="Hikvision" width="110" height="14">
+        <img class="tsw-dark" src="/img/hikvision-oscuro.webp" alt="Hikvision" width="110" height="14">
+        <span class="sep" aria-hidden="true"></span>
+        <span>Showroom virtual</span>
+        <span class="sep" aria-hidden="true"></span>
+        <span class="live">Demos en vivo</span>
+      </div>
+      <h2>Tecnologías que podés probar acá mismo</h2>
+      <p>Cuatro tecnologías core que definen el estándar de nuestros proyectos. Cada tarjeta tiene un simulador interactivo: movete sobre él, arrastrá o tocá para ver cómo trabaja cada una.</p>
+
+      <div class="tech-tabs" role="tablist" aria-label="Tecnologías Hikvision">
+        <button type="button" class="tech-tab is-active" role="tab" aria-selected="true" data-target="0" style="--tech:var(--hik-colorvu)"><i aria-hidden="true"></i>ColorVu</button>
+        <button type="button" class="tech-tab" role="tab" aria-selected="false" data-target="1" style="--tech:var(--hik-acusense)"><i aria-hidden="true"></i>AcuSense</button>
+        <button type="button" class="tech-tab" role="tab" aria-selected="false" data-target="2" style="--tech:var(--hik-tandemvu)"><i aria-hidden="true"></i>TandemVu</button>
+        <button type="button" class="tech-tab" role="tab" aria-selected="false" data-target="3" style="--tech:var(--hik-darkfighter)"><i aria-hidden="true"></i>DarkFighterX</button>
+      </div>
+    </div>
+
+    <!-- Feed de cámara compartido por los cuatro simuladores: un solo <video> en loop
+         (11 s, seam con crossfade) que cada canvas recorta y procesa. Las cajas de
+         personas vienen de un tracking precalculado fotograma a fotograma. -->
+    <video id="showroomFeed" class="tech-feed" muted loop playsinline preload="none"
+           poster="/video/showroom-plaza-poster.jpg" data-tracks="/video/showroom-plaza.tracks.json" aria-hidden="true">
+      <source src="/video/showroom-plaza.mp4" type="video/mp4">
+    </video>
+
+    <div class="tech-stage" id="techStage" tabindex="0" aria-roledescription="carrusel" aria-label="Carrusel de tecnologías Hikvision. Usá las flechas del teclado para navegar.">
+      <button type="button" class="tech-arrow prev" id="techPrev" aria-label="Tecnología anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button type="button" class="tech-arrow next" id="techNext" aria-label="Tecnología siguiente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <div class="tech-track" id="techTrack">
+
+        <!-- 1 · ColorVu -->
+        <article class="tech-card is-active" data-index="0" data-tech="colorvu" style="--tech:var(--hik-colorvu)">
+          <div class="tc-top">
+            <div class="tc-brand">
+              <span class="tc-wordmark">ColorVu<sup>3.0</sup></span>
+            </div>
+            <span class="tc-model">DS-2CD2087G3-LI2UY/S · 4K</span>
+          </div>
+          <div class="tc-demo" data-demo="colorvu" aria-label="Simulador: cámara convencional vs ColorVu 3.0. Arrastrá para comparar.">
+            <canvas></canvas>
+            <div class="tc-demo-hud"><span>Cámara convencional</span><span class="tag">ColorVu 3.0 · F1.0</span></div>
+            <div class="tc-demo-hint">Arrastrá el divisor: convencional vs ColorVu 3.0</div>
+          </div>
+          <div class="tc-body">
+            <figure class="tc-product">
+              <img src="/img/tech/colorvu.webp" alt="Cámara bullet Hikvision ColorVu 3.0 DS-2CD2087G3-LI2UY/S" width="720" height="641" loading="lazy" decoding="async">
+              <figcaption>Bullet ColorVu 3.0 · Smart Hybrid Light</figcaption>
+            </figure>
+            <div class="tc-copy">
+              <h3>ColorVu 3.0: color real las 24 horas, <em>sin infrarrojos</em></h3>
+              <p>Apertura F1.0, sensor de gran tamaño y luz híbrida inteligente: donde una cámara común entrega una imagen oscura, lavada y con ruido, ColorVu 3.0 reconstruye el color y el detalle como si fuera de día. Identificar el color de un auto o una campera de noche deja de ser un problema.</p>
+              <ul class="tc-specs">
+                <li><b>F1.0</b><span>Apertura súper luminosa</span></li>
+                <li><b>0.0005 lx</b><span>Iluminación mínima</span></li>
+                <li><b>4K · 130 dB</b><span>Resolución · WDR</span></li>
+              </ul>
+              <a class="tc-cta" href="https://wa.me/5491124802161?text=Hola%20Control%20Red%2C%20quiero%20consultar%20por%20una%20soluci%C3%B3n%20con%20tecnolog%C3%ADa%20Hikvision%20ColorVu%203.0" target="_blank" rel="noopener">
+                Consultar solución ColorVu 3.0
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+              <a class="tc-ver" href="/productos?q=colorvu">Ver productos ColorVu en la tienda</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- 2 · AcuSense -->
+        <article class="tech-card" data-index="1" data-tech="acusense" style="--tech:var(--hik-acusense)">
+          <div class="tc-top">
+            <div class="tc-brand">
+              <span class="tc-wordmark">AcuSense</span>
+            </div>
+            <span class="tc-model">DS-2CD2043G2-IU · Deep Learning</span>
+          </div>
+          <div class="tc-demo" data-demo="acusense" aria-label="Simulador: detección de personas y vehículos con AcuSense. Tocá para activar o desactivar.">
+            <canvas></canvas>
+            <div class="tc-demo-hud"><span class="tag">AcuSense · ON</span><span>Alarmas: 0</span></div>
+            <div class="tc-demo-hint">Tocá para apagar AcuSense y ver las falsas alarmas</div>
+          </div>
+          <div class="tc-body">
+            <figure class="tc-product">
+              <img src="/img/tech/acusense.webp" alt="Cámara bullet Hikvision AcuSense DS-2CD2043G2-IU" width="720" height="444" loading="lazy" decoding="async">
+              <figcaption>Bullet AcuSense · 4 MP</figcaption>
+            </figure>
+            <div class="tc-copy">
+              <h3>Sólo alerta cuando <em>importa</em></h3>
+              <p>Un algoritmo de deep learning en la cámara clasifica personas y vehículos y descarta hojas, lluvia, animales o luces. Menos falsas alarmas, búsqueda por objetivo en segundos y disuasión activa con luz y sirena.</p>
+              <ul class="tc-specs">
+                <li><b>Humano · Vehículo</b><span>Clasificación en cámara</span></li>
+                <li><b>−98 %</b><span>Falsas alarmas</span></li>
+                <li><b>Strobe + Audio</b><span>Disuasión activa</span></li>
+              </ul>
+              <a class="tc-cta" href="https://wa.me/5491124802161?text=Hola%20Control%20Red%2C%20quiero%20consultar%20por%20una%20soluci%C3%B3n%20con%20tecnolog%C3%ADa%20Hikvision%20AcuSense" target="_blank" rel="noopener">
+                Consultar solución AcuSense
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+              <a class="tc-ver" href="/productos?q=acusense">Ver productos AcuSense en la tienda</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3 · TandemVu -->
+        <article class="tech-card" data-index="2" data-tech="tandemvu" style="--tech:var(--hik-tandemvu)">
+          <div class="tc-top">
+            <div class="tc-brand">
+              <span class="tc-wordmark">TandemVu</span>
+            </div>
+            <span class="tc-model">DS-2SE7C425MWG-EB · PTZ 25×</span>
+          </div>
+          <div class="tc-demo" data-demo="tandemvu" aria-label="Simulador: vista panorámica y PTZ en tándem. Movete sobre la panorámica para dirigir el PTZ.">
+            <canvas></canvas>
+            <div class="tc-demo-hud"><span>Panorámica 180°</span><span class="tag">PTZ · 25× auto-tracking</span></div>
+            <div class="tc-demo-hint">Movete sobre la panorámica para dirigir el PTZ · o dejalo seguir solo</div>
+          </div>
+          <div class="tc-body">
+            <figure class="tc-product">
+              <img src="/img/tech/tandemvu.webp" alt="Cámara PTZ Hikvision TandemVu DS-2SE7C425MWG-EB" width="431" height="720" loading="lazy" decoding="async">
+              <figcaption>TandemVu PTZ 7" · Dual-lens</figcaption>
+            </figure>
+            <div class="tc-copy">
+              <h3>La escena completa y el <em>detalle</em>, al mismo tiempo</h3>
+              <p>Dos canales en un solo equipo: un lente panorámico vigila toda el área mientras el domo PTZ sigue de forma autónoma al objetivo y acerca la patente o el rostro. Nunca perdés el contexto para ver el detalle.</p>
+              <ul class="tc-specs">
+                <li><b>2 canales</b><span>Panorámico + PTZ</span></li>
+                <li><b>25× óptico</b><span>Zoom con auto-tracking</span></li>
+                <li><b>Linkage</b><span>Detección → seguimiento</span></li>
+              </ul>
+              <a class="tc-cta" href="https://wa.me/5491124802161?text=Hola%20Control%20Red%2C%20quiero%20consultar%20por%20una%20soluci%C3%B3n%20con%20tecnolog%C3%ADa%20Hikvision%20TandemVu" target="_blank" rel="noopener">
+                Consultar solución TandemVu
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+              <a class="tc-ver" href="/productos?q=tandemvu">Ver productos TandemVu en la tienda</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- 4 · DarkFighterX -->
+        <article class="tech-card" data-index="3" data-tech="darkfighter" style="--tech:var(--hik-darkfighter)">
+          <div class="tc-top">
+            <div class="tc-brand">
+              <span class="tc-wordmark">DarkFighter<sup>X</sup></span>
+            </div>
+            <span class="tc-model">DS-2DF8C435MHS-DELW · 35×</span>
+          </div>
+          <div class="tc-demo" data-demo="darkfighter" aria-label="Simulador DarkFighterX: la lente revela la fusión de sensor visible e infrarrojo. Tocá para ver toda la escena.">
+            <canvas></canvas>
+            <div class="tc-demo-hud"><span>Luz ambiente: 0.0005 lx</span><span class="tag">DarkFighterX · fusión</span></div>
+            <div class="tc-demo-hint">Movete para revelar con DarkFighterX · tocá para ver toda la escena</div>
+          </div>
+          <div class="tc-body">
+            <figure class="tc-product">
+              <img src="/img/tech/darkfighterx.webp" alt="Domo PTZ Hikvision DarkFighterX DS-2DF8C435MHS-DELW" width="468" height="720" loading="lazy" decoding="async">
+              <figcaption>Speed Dome DarkFighterX</figcaption>
+            </figure>
+            <div class="tc-copy">
+              <h3>Dos sensores, <em>una imagen</em> que no se rinde a la oscuridad</h3>
+              <p>Inspirada en el ojo humano: un sensor infrarrojo captura la luminancia y otro el color; el procesador los fusiona en tiempo real. Color real a 0.0001 lux, sin el ruido de una sola cámara forzada al límite.</p>
+              <ul class="tc-specs">
+                <li><b>Bi-Spectrum</b><span>IR + visible fusionados</span></li>
+                <li><b>0.0001 lx</b><span>A color, sin luz auxiliar</span></li>
+                <li><b>35× · 300 m</b><span>Zoom óptico · IR</span></li>
+              </ul>
+              <a class="tc-cta" href="https://wa.me/5491124802161?text=Hola%20Control%20Red%2C%20quiero%20consultar%20por%20una%20soluci%C3%B3n%20con%20tecnolog%C3%ADa%20Hikvision%20DarkFighterX" target="_blank" rel="noopener">
+                Consultar solución DarkFighterX
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+              <a class="tc-ver" href="/productos?q=darkfighter">Ver productos DarkFighter en la tienda</a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+
+    <div class="tech-nav" aria-label="Navegación del carrusel">
+      <div class="tech-dots" id="techDots">
+        <button type="button" class="tech-dot is-active" data-index="0" style="--tech:var(--hik-colorvu)" aria-label="Ir a ColorVu"></button>
+        <button type="button" class="tech-dot" data-index="1" style="--tech:var(--hik-acusense)" aria-label="Ir a AcuSense"></button>
+        <button type="button" class="tech-dot" data-index="2" style="--tech:var(--hik-tandemvu)" aria-label="Ir a TandemVu"></button>
+        <button type="button" class="tech-dot" data-index="3" style="--tech:var(--hik-darkfighter)" aria-label="Ir a DarkFighterX"></button>
+      </div>
+    </div>
+  </div>
+</section>
