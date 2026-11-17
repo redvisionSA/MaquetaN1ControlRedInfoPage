@@ -217,7 +217,7 @@ export function BotonFavorito({ id, className = '' }) {
       aria-pressed={activo}
       aria-label={activo ? 'Quitar de favoritos' : 'Guardar en favoritos'}
       title={activo ? 'Quitar de favoritos' : 'Guardar en favoritos'}
-      className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-pill bg-white/85 shadow-sm
+      className={`inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-[4px] border border-black/10 bg-white/90
                   transition-all duration-200 ease-apple active:scale-90
                   ${activo ? 'text-cr-blue' : 'text-black/60 hover:text-cr-blue'} ${className}`}
     >
@@ -231,7 +231,7 @@ export function AvisoDemo() {
   const { catalogo } = useTienda()
   if (!catalogo.datos.demo) return null
   return (
-    <div className="pointer-events-none fixed bottom-3 left-3 z-[60] max-w-[calc(100%-6rem)] rounded-pill bg-black px-3.5 py-1.5 font-display text-[9px] font-semibold uppercase leading-tight tracking-[0.12em] text-white sm:text-[10px] sm:tracking-[0.16em] dark:bg-white dark:text-black">
+    <div className="pointer-events-none fixed bottom-3 left-3 z-[60] max-w-[calc(100%-6rem)] rounded-[4px] bg-black px-3.5 py-1.5 font-display text-[9px] font-semibold uppercase leading-tight tracking-[0.12em] text-white sm:text-[10px] sm:tracking-[0.16em] dark:bg-white dark:text-black">
       Datos de demostración · sin conexión al ERP
     </div>
   )

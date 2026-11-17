@@ -558,7 +558,7 @@
   flex-shrink: 0;
   min-height: 36px;
   padding: 0 12px;
-  border-radius: 999px;
+  border-radius: 3px; /* Aspecto 6: sin píldoras */
   font-size: 0.84rem;
   font-weight: 600;
   white-space: nowrap;
@@ -571,19 +571,22 @@
   color: var(--text);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
+/* Elegido: la tecla queda «marcada» con una barra azul abajo (no un relleno pastel) */
 .cr-depto.is-active {
   color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 .cr-depto--todos {
   color: #fff;
-  background: var(--accent);
+  background: var(--cr-btn);
   font-weight: 700;
+  box-shadow: inset 0 -3px 0 var(--cr-tecla-borde);
 }
 .cr-depto--todos:hover,
 .cr-depto--todos.is-active {
   color: #fff;
-  background: var(--accent-strong);
+  background: var(--cr-btn-hover);
+  box-shadow: inset 0 -3px 0 var(--cr-tecla-borde);
 }
 .cr-depto--suave {
   font-weight: 500;
@@ -628,13 +631,22 @@ button.cr-depto {
 .cr-menu-cat-hija {
   display: flex;
   align-items: center;
-  border-radius: 8px;
+  border-radius: 3px;
   padding: 0 8px;
   transition:
     color 0.2s var(--ease),
     background-color 0.2s var(--ease);
 }
+/* Raíz con el cuadrado de «información» de la señalética, como un rótulo de tablero */
+.cr-menu-cat-raiz::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: none;
+  background: var(--accent);
+}
 .cr-menu-cat-raiz {
+  gap: 8px;
   min-height: 40px;
   font-weight: 700;
   font-size: 0.92rem;
