@@ -32,27 +32,52 @@ export function Precio({ valor, canal = null, className = '', grande = false }) 
 }
 
 /* ----------------------------------------------------- Disponibilidad */
-/* Pastilla con icono y texto: el estado nunca depende solo del color, y se
-   lee de un vistazo en la tarjeta (no un punto gris). Rojo solo para lo que
-   apura o frena: pocas unidades y sin stock. En oscuro el rojo del texto pasa
-   a `cr-red-glow` para sostener el contraste sobre el azul noche. */
-const PASTILLA = {
-  ok: 'border-black/25 bg-white text-black dark:border-white/30 dark:bg-white/10 dark:text-white',
-  alerta: 'border-cr-red/50 bg-cr-red/[0.07] text-cr-red dark:border-cr-red-glow/60 dark:bg-cr-red/20 dark:text-cr-red-glow',
-  neutro: 'border-black/15 bg-black/[0.04] text-black/80 dark:border-white/20 dark:bg-white/[0.06] dark:text-white/85',
-  apagado: 'border-cr-red bg-cr-red text-white',
-}
-
-const ICONO_DISPONIBILIDAD = {
-  ok: <path d="m4.5 12.5 4.5 4.5L19.5 7" />,
-  alerta: <circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none" />,
-  neutro: (
-    <>
-      <circle cx="12" cy="12" r="8" />
-      <path d="M12 7.5V12l3 2" />
-    </>
-  ),
-  apagado: <path d="M7 7l10 10M17 7 7 17" />,
+/* Señal de dos paneles (Aspecto 6, «tablero de instalador»): como una
+   etiqueta ANSI Z535 / ISO 3864, un panel de símbolo con la forma normalizada
+   y al lado el texto. Cuadrado = información (disponible), triángulo =
+   cuidado (últimas unidades), cuadrado con reloj = a pedido, círculo tachado =
+   no se puede (sin stock). El estado nunca depende solo del color, y el rojo
+   queda para lo que apura o frena. Piezas propias de Control Red: la tienda de
+   REDVISION habla otro idioma («OSD / visor»); al portar código, traducir. */
+export function SimboloIso({ forma, className = 'h-3.5 w-3.5' }) {
+  const p = { viewBox: '0 0 16 16', className, 'aria-hidden': 'true' }
+  if (forma === 'ok')
+    return (
+      <svg {...p}>
+        <rect x="1.5" y="1.5" width="13" height="13" rx="1" fill="currentColor" />
+        <path d="m4.6 8.2 2.3 2.3 4.5-4.8" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  if (forma === 'alerta')
+    return (
+      <svg {...p}>
+        <path d="M8 1.6 15 14H1z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+        <path d="M8 6v3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <circle cx="8" cy="11.8" r="1" fill="currentColor" />
+      </svg>
+    )
+  if (forma === 'neutro')
+    return (
+      <svg {...p}>
+        <rect x="1.5" y="1.5" width="13" height="13" rx="1" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M8 4.6V8l2.4 1.6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+    )
+  if (forma === 'apagado')
+    return (
+      <svg {...p}>
+        <circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M3.7 3.7l8.6 8.6" stroke="currentColor" strokeWidth="2" />
+      </svg>
+    )
+  /* info: cuadrado con «i» (encabezado de placa) */
+  return (
+    <svg {...p}>
+      <rect x="1.5" y="1.5" width="13" height="13" rx="1" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M8 7v4.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="8" cy="4.8" r="1" fill="currentColor" />
+    </svg>
+  )
 }
 
 /**
@@ -76,24 +101,12 @@ export function Disponibilidad({ producto, className = '', grande = false }) {
   const info = DISPONIBILIDAD[valor] || DISPONIBILIDAD.a_pedido
   const texto = textoStock(producto?.stock) || info.etiqueta
   return (
-    <span
-      className={`inline-flex w-max max-w-full items-center gap-1.5 rounded-md border font-display font-semibold leading-tight
-                  ${grande ? 'px-2.5 py-1 text-sm' : 'px-2 py-0.5 text-xs'} ${PASTILLA[info.tono]} ${className}`}
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        className={`shrink-0 ${grande ? 'h-4 w-4' : 'h-3.5 w-3.5'} ${info.tono === 'alerta' ? 'animate-cr-breathe' : ''}`}
-      >
-        {ICONO_DISPONIBILIDAD[info.tono]}
-      </svg>
+    <span className={`cr-senal cr-senal--${info.tono} ${grande ? 'cr-senal--grande' : ''} ${className}`}>
+      <span className="cr-senal__sim">
+        <SimboloIso forma={info.tono} className={grande ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+      </span>
       {/* En tarjetas angostas (320 px, dos columnas) el texto pasa a dos lineas: cortarlo escondia el estado */}
-      <span>{texto}</span>
+      <span className="cr-senal__txt">{texto}</span>
     </span>
   )
 }
@@ -129,19 +142,20 @@ export function sePuedeComprar(producto) {
    para que el estado mande en la jerarquia antes que el producto. En las
    miniaturas de 48 px (`tamano="xs"`: buscador, carrito) no entra el texto:
    queda solo la foto atenuada. */
+/* Sin stock: placa roja al pie de la foto, con el círculo tachado (antes,
+   píldora con resplandor rojo en el centro). */
 const ETIQUETA_SIN_STOCK = {
-  lg: 'px-5 py-2.5 text-lg tracking-[0.14em]',
-  md: 'px-3 py-1.5 text-xs tracking-[0.12em] sm:text-sm',
-  sm: 'px-1.5 py-0.5 text-[10px] leading-tight tracking-[0.06em]',
+  lg: 'inset-x-4 bottom-4 gap-2 py-2.5 text-base',
+  md: 'inset-x-2.5 bottom-2.5 gap-1.5 py-1.5 text-xs sm:text-sm',
+  sm: 'inset-x-1 bottom-1 gap-1 py-0.5 text-[10px] leading-tight',
 }
 
 function CapaSinStock({ tamano }) {
   if (!ETIQUETA_SIN_STOCK[tamano]) return null
   return (
-    <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/35 dark:bg-black/30">
-      <span
-        className={`max-w-[92%] rounded-md bg-cr-red text-center font-display font-bold uppercase text-white shadow-[0_6px_20px_rgba(226,35,26,0.35)] ${ETIQUETA_SIN_STOCK[tamano]}`}
-      >
+    <div className="pointer-events-none absolute inset-0 bg-white/30 dark:bg-black/25">
+      <span className={`absolute flex items-center justify-center rounded-[2px] bg-cr-red font-display font-bold text-white ${ETIQUETA_SIN_STOCK[tamano]}`}>
+        {tamano !== 'sm' && <SimboloIso forma="apagado" className="h-4 w-4 shrink-0" />}
         Sin stock
       </span>
     </div>

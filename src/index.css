@@ -161,9 +161,64 @@
   }
 
   .cr-chip {
-    @apply inline-flex items-center gap-2 rounded-pill px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.14em];
+    @apply inline-flex items-center gap-2 px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.14em];
+    border-radius: 3px;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-strong);
+  }
+
+  /* --- Señal de dos paneles (disponibilidad, combos) ------------------ */
+  .cr-senal {
+    @apply inline-flex w-max max-w-full items-stretch overflow-hidden font-display text-xs font-semibold leading-tight;
+    min-height: 26px;
+    border-radius: 3px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-strong);
+    color: var(--text);
+  }
+  .cr-senal__sim {
+    @apply grid w-[26px] shrink-0 place-items-center;
+    border-right: 1px solid var(--border-strong);
+    background: var(--cr-placa);
+    color: var(--accent);
+  }
+  [data-theme='dark'] .cr-senal__sim {
+    color: var(--cr-placa-text);
+  }
+  .cr-senal__txt {
+    @apply flex items-center gap-1.5 px-2 py-1;
+  }
+  .cr-senal--grande {
+    @apply text-sm;
+    min-height: 32px;
+  }
+  .cr-senal--grande .cr-senal__sim {
+    width: 32px;
+  }
+  .cr-senal--alerta {
+    border-color: var(--cr-freno);
+  }
+  .cr-senal--alerta .cr-senal__sim,
+  [data-theme='dark'] .cr-senal--alerta .cr-senal__sim {
+    background: transparent;
+    color: var(--cr-freno-text);
+    border-right-color: var(--cr-freno);
+  }
+  .cr-senal--neutro .cr-senal__sim,
+  [data-theme='dark'] .cr-senal--neutro .cr-senal__sim {
+    background: transparent;
+    color: var(--text-muted);
+  }
+  .cr-senal--apagado {
+    border-color: var(--cr-freno);
+    background: var(--cr-freno);
+    color: #fff;
+  }
+  .cr-senal--apagado .cr-senal__sim,
+  [data-theme='dark'] .cr-senal--apagado .cr-senal__sim {
+    background: #fff;
+    color: var(--cr-freno);
+    border-right-color: var(--cr-freno);
   }
 
   /* Chip blanco para logos de marca: conservan sus colores en claro y oscuro */

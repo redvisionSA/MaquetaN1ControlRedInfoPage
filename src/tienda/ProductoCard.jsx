@@ -71,8 +71,9 @@ function ProductoCard({ producto, className = '', vista = 'grilla' }) {
         <Link to={`/producto/${producto.slug}`} className={`flex min-w-0 flex-1 flex-col gap-1.5 ${lista ? '' : 'px-3.5 pt-3 sm:px-4'}`}>
           <div className="flex h-7 items-center">
             {producto.combo ? (
-              <span className="cr-sutil rounded-md px-2 py-0.5 font-display text-[11px] font-semibold uppercase tracking-wide text-black/80 dark:text-white/85">
-                Combo · {producto.combo.componentes.length} productos
+              <span className="cr-senal">
+                <span className="cr-senal__sim font-mono text-[11px] font-bold">{producto.combo.componentes.length}</span>
+                <span className="cr-senal__txt">Combo de {producto.combo.componentes.length} productos</span>
               </span>
             ) : (
               <LogoMarca marca={producto.marca} uniforme />
