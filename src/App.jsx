@@ -8,6 +8,7 @@ import { CuentaProvider } from './cuenta/CuentaContext.jsx'
 import CarritoDrawer from './tienda/CarritoDrawer.jsx'
 import BotonWhatsapp from './tienda/BotonWhatsapp.jsx'
 import { AvisoDemo } from './tienda/piezas.jsx'
+import { irAlAncla } from './componentes/anclas.js'
 
 /* Cada pagina es un chunk propio. El inicio pide la vitrina (three + gsap)
    aparte: quien entra directo a un producto no descarga WebGL. */
@@ -29,21 +30,18 @@ const MiCuenta = cuenta('MiCuenta')
 /* Al cambiar de pagina se vuelve arriba (salvo que la URL traiga un ancla);
    cambiar filtros (?q=, ?marca=) no mueve el scroll. */
 function AlCambiarDePagina() {
-  const { pathname, hash } = useLocation()
+  const { pathname, hash, key } = useLocation()
   useEffect(() => {
     const tienda = /^\/(productos|producto|carrito|favoritos|cuenta)(\/|$)/.test(pathname)
     if (tienda) document.documentElement.dataset.zona = 'tienda'
     else delete document.documentElement.dataset.zona
   }, [pathname])
+  /* Con ancla: espera a que la seccion exista (el inicio es diferido) y la deja
+     debajo de la barra. `key` cambia aunque el ancla sea la misma: tocar otra
+     vez «Demos en vivo» despues de scrollear vuelve a llevar. */
+  useEffect(() => (hash ? irAlAncla(hash) : undefined), [pathname, hash, key])
   useEffect(() => {
-    if (hash) {
-      /* El inicio carga en diferido: se espera un cuadro a que exista el ancla */
-      const ir = () => document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView({ behavior: 'smooth' })
-      const id = window.setTimeout(ir, 60)
-      return () => window.clearTimeout(id)
-    }
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-    return undefined
+    if (!hash) window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [pathname, hash])
   return null
 }
