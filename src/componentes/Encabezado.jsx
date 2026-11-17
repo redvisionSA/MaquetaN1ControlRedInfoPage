@@ -21,7 +21,7 @@ import { BotonTema } from './Tema.jsx'
 
 const SECCIONES = [
   { to: '/#demos', label: 'Demos en vivo' },
-  { to: '/#proyectos', label: 'Proyectos' },
+  { to: '/iared', label: 'Proyectos · IARED' },
   { to: '/#ubicacion', label: 'Local de Flores' },
   { to: '/#preguntas-frecuentes', label: 'Preguntas frecuentes' },
 ]

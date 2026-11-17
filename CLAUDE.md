@@ -40,7 +40,8 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
 | Tema | `src/componentes/Tema.jsx`: arranca siempre claro; avisa `themechange` (lo escuchan hero y partículas). |
 | Barra y pie | `src/componentes/Encabezado.jsx` (barra de confianza Hikvision + barra v1 + buscador, cuenta, favoritos, carrito; fila de categorías del ERP desde 921 px con el menú «Categorías» (todas, con sus hijas); publica `--chrome-h` para el hero), `Pie.jsx` |
 | Vitrina v1 | `src/vitrina/hero.html`, `tecnologias.html` (HTML de la v1, imágenes extraídas a `public/img/`) y `montar.js` (scripts de la v1 con limpieza de listeners/observers/RAF/GPU al salir del inicio; generado una vez con `scripts/generar-montar.mjs`, ahora se edita a mano). Video del showroom en `public/video/`. |
-| Inicio | `src/paginas/Inicio.jsx`: hero → categorías (las primeras del ERP) → carrusel → tecnologías (cada tarjeta enlaza a `/productos?q=…`) → marcas → respaldo → banda mayorista → proyectos/capacitaciones (reducido) → ubicación y canales → preguntas → banda CTA. |
+| Inicio | `src/paginas/Inicio.jsx`: hero → categorías (las primeras del ERP) → carrusel → demos en vivo (`#demos`, alias `#tecnologias`) → marcas → respaldo → banda mayorista → **bloque IARED** → ubicación y canales → preguntas → banda CTA. |
+| IARED | `src/datos/iared.js` (único lugar con sus datos), `src/componentes/Iared.jsx` (marca, botón, bloque del inicio), `src/paginas/Iared.jsx` (`/iared`). Ver «IARED» abajo. |
 | Tienda (motores de RV) | `src/tienda/*` (catálogo, búsqueda y facetas, buscador, líneas, marcas, similares/compatibles, disponibilidad, carrito, WhatsApp, popularidad), `src/cuenta/*`, `src/paginas/{Catalogo,Producto,Carrito,Favoritos,Cuenta}.jsx` |
 | Datos de contacto | `src/datos/empresa.js` (fuente única; el JSON-LD de `index.html` es manual) |
 | Servidor | `api/pedido.js` (Resend, número `CR-W-AAMMDD-XXXXX`), `api/_popularidad.js`, `api/_limites.js`, `functions/` (adaptador `_vercel.js`, `api/pedido`, `api/evento`, `api/populares`) |
@@ -71,6 +72,32 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
   si hay sesión del ERP con el mismo correo de la cuenta; si no, plantilla fija con solo el número
   (nada del texto libre), a lo sumo 5 por red y 3 por correo por día, y sin D1 no sale. Turnstile
   queda como mejora si aparece abuso.
+
+## IARED: los proyectos son de IARED (17/11)
+Control Red **no ofrece proyectos** (relevamiento, ingeniería, integración, instalación, puesta en marcha,
+capacitación en obra, «llave en mano»). Los hace **IARED** (marca propia, con su manual). La tienda solo le da visibilidad y deriva: bloque en el inicio (`#iared`, con
+ancla `#proyectos` para enlaces viejos), página `/iared` (`/proyectos` y `/macroproyectos` redirigen ahí),
+«Proyectos · IARED» en la barra y en el pie. Las capacitaciones técnicas **para el gremio** siguen siendo de
+Control Red (pregunta frecuente); el hero dejó de prometer macroproyectos.
+- **Marca (manual de IARED v1.0, 17/11)**: logo oficial **con eslogan** en `public/iared/` (copiado byte a
+  byte del manual tras revisar que no tiene scripts, `on*` ni referencias externas): a color sobre claro,
+  negativo sobre Noche; 210–260 px de ancho (mínimo 160), 180 px en teléfonos, con resguardo de 2X debajo y a
+  la derecha. Eslogan aprobado: «Inteligencia Aplicada a la Red» (`IARED.eslogan`). Colores del manual en el
+  CSS de `.iared-zona` (Esmeralda, Verde IA, Verde Red, Lima, Tinta, Noche, Niebla, Menta; degradado
+  esmeralda→lima a 120°, el claro sobre oscuro). Títulos y botones en **Sora** 600/700, que se pide a Google
+  Fonts solo cuando aparece IARED (`useFuenteIared`); el cuerpo sigue con la fuente de la tienda.
+  **Dentro de `.iared-zona` no va el azul de Control Red** (el manual lo prohíbe como color de apoyo de IARED); texto blanco
+  solo sobre Esmeralda, Tinta o Noche.
+- **A conversar (arquitectura de marca)**: el manual presenta a IARED como «división de inteligencia artificial
+  de Control Red y Red Vision» y propone la firma «Una división de Control Red y Red Vision». La tienda no la
+  muestra (nombraría a la otra empresa) y ya no dice «empresa independiente»: no afirma ninguna de las dos.
+  Decidirlo con el CEO.
+- **Contacto**: el manual no trae datos reales (la tarjeta de ejemplo usa «nombre@iared.com» y «+00 000…»).
+  `url`, `whatsapp` y `email` siguen en `null`; mientras tanto, el botón abre el WhatsApp de Control Red con
+  «Hola Control Red, quiero que IARED me contacte por un proyecto.» y la página lo avisa (`AvisoRespaldo`). Al
+  completar un campo, el botón cambia solo (prioridad: sitio → WhatsApp → correo). **No inventar** dominio,
+  cifras, clientes ni plazos de IARED.
+- Límite entre empresas: en `iared.js` no va nada de Control Red ni de REDVISION.
 
 ## ERP
 - Catálogo: `GET https://api-erp.redvision.com.ar/storefront/controlred/catalog`, **en producción**

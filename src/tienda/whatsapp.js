@@ -35,7 +35,6 @@ export function mensajePedido({ numero, lineas, cliente, lista }) {
 export const CONSULTAS = {
   asesor: 'Hola Control Red, quería hacer una consulta.',
   mayorista: 'Hola Control Red, soy instalador / empresa y quiero abrir una cuenta mayorista.',
-  proyecto: 'Hola Control Red, quería consultar por un macroproyecto.',
   capacitacion: 'Hola Control Red, quiero que me avisen de la próxima capacitación técnica.',
 }
 

@@ -40,7 +40,7 @@ export default function Pie() {
                 <Link to="/#demos">Demos en vivo</Link>
               </li>
               <li>
-                <Link to="/#proyectos">Macroproyectos</Link>
+                <Link to="/iared">Proyectos · IARED</Link>
               </li>
               <li>
                 <Link to="/#ubicacion">Ubicación</Link>
