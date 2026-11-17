@@ -167,6 +167,50 @@
     border: 1px solid var(--border-strong);
   }
 
+  /* --- Placa troquelada (avisos) --------------------------------------
+     Dos capas con clip-path: la de afuera pinta el borde de 1,5 px y la de
+     adentro la superficie; así la esquina cortada también tiene borde. */
+  .cr-placa {
+    --c: var(--cr-corte, 12px);
+    display: grid;
+    padding: 1.5px;
+    background: var(--border-strong);
+    clip-path: polygon(0 0, calc(100% - var(--c)) 0, 100% var(--c), 100% 100%, 0 100%);
+  }
+  .cr-placa__in {
+    background: var(--surface-strong);
+    clip-path: polygon(0 0, calc(100% - var(--c) + 1px) 0, 100% calc(var(--c) - 1px), 100% 100%, 0 100%);
+  }
+  .cr-placa__cab {
+    @apply flex items-center gap-2 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em];
+    background: var(--cr-placa);
+    color: var(--cr-placa-text);
+  }
+  .cr-placa__cuerpo {
+    @apply px-3.5 pb-3.5 pt-3 text-sm leading-relaxed;
+    color: var(--text);
+  }
+  .cr-placa__tit {
+    @apply mb-1 font-display text-[15px] font-bold leading-snug;
+  }
+  .cr-placa__pie {
+    @apply mt-3 flex flex-wrap items-center gap-3 pt-3;
+    border-top: 1.5px dashed var(--border-strong);
+  }
+  .cr-placa--atencion,
+  .cr-placa--freno {
+    background: var(--cr-freno);
+  }
+  .cr-placa--atencion .cr-placa__cab {
+    background: transparent;
+    color: var(--cr-freno-text);
+    border-bottom: 1.5px solid var(--cr-freno);
+  }
+  .cr-placa--freno .cr-placa__cab {
+    background: var(--cr-freno);
+    color: #fff;
+  }
+
   /* --- Señal de dos paneles (disponibilidad, combos) ------------------ */
   .cr-senal {
     @apply inline-flex w-max max-w-full items-stretch overflow-hidden font-display text-xs font-semibold leading-tight;

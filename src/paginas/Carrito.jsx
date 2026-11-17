@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTienda } from '../tienda/TiendaContext.jsx'
 import LineaCarrito from '../tienda/LineaCarrito.jsx'
-import { Campo, Migas } from '../tienda/piezas.jsx'
+import { Campo, Migas, Placa, SimboloIso } from '../tienda/piezas.jsx'
 import { formatoPrecio } from '../tienda/formato.js'
 import { enlaceWhatsapp, mensajePedido } from '../tienda/whatsapp.js'
 import { IconoCheck, IconoEscudo, IconoWhatsapp } from '../tienda/Iconos.jsx'
@@ -70,8 +70,11 @@ function Confirmacion({ pedido }) {
     <Pagina>
       <Pasos actual={2} />
       <div className="cr-solido mx-auto max-w-2xl p-6 text-center sm:p-10">
-        <span className="mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-pill bg-cr-blue text-white">
-          <IconoCheck className="h-7 w-7" />
+        <span className="cr-senal cr-senal--grande mx-auto mb-5">
+          <span className="cr-senal__sim">
+            <SimboloIso forma="ok" className="h-4 w-4" />
+          </span>
+          <span className="cr-senal__txt">Pedido recibido</span>
         </span>
         <h1 className="text-onglass font-display text-2xl font-bold sm:text-3xl">Recibimos tu pedido</h1>
         <p className="mt-2 font-display text-lg font-semibold text-black dark:text-white">
@@ -339,15 +342,22 @@ export default function Carrito() {
               </p>
 
               {errorEnvio && (
-                <div className="mt-4 rounded-2xl p-4 text-sm" style={{ border: '1px solid #E2231A', background: 'rgba(226,35,26,0.06)' }} role="alert">
-                  <p className="font-semibold text-cr-red dark:text-cr-red-glow">{errorEnvio}</p>
-                  {mensajeRespaldo && (
-                    <a href={enlaceWhatsapp(mensajeRespaldo)} target="_blank" rel="noopener noreferrer" className="cr-btn-primary mt-3 w-full">
-                      <IconoWhatsapp className="h-4 w-4" />
-                      Enviar el pedido por WhatsApp
-                    </a>
-                  )}
-                </div>
+                <Placa
+                  tono="freno"
+                  cabecera="pedido no enviado"
+                  className="mt-4"
+                  titulo={errorEnvio}
+                  acciones={
+                    mensajeRespaldo && (
+                      <a href={enlaceWhatsapp(mensajeRespaldo)} target="_blank" rel="noopener noreferrer" className="cr-btn-primary w-full">
+                        <IconoWhatsapp className="h-4 w-4" />
+                        Mandar el pedido por WhatsApp
+                      </a>
+                    )
+                  }
+                >
+                  {mensajeRespaldo && <p>Tu carrito sigue guardado: mandalo por WhatsApp con el mismo detalle.</p>}
+                </Placa>
               )}
 
               <button type="submit" disabled={enviando || validas.length === 0} className="cr-btn-primary mt-5 w-full" aria-busy={enviando || undefined}>

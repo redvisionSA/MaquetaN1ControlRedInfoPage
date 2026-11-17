@@ -255,17 +255,42 @@ export function Campo({ id, label, error, ayuda, children, className = '' }) {
   )
 }
 
-/** Error de un envio: borde rojo y role=alert para lectores de pantalla. */
+/* ------------------------------------------------------------ Placa */
+/* Aviso como placa troquelada (Aspecto 6, «tablero de instalador»): borde de
+   1,5 px, esquina superior derecha cortada a 45° y encabezado en mono con la
+   palabra de señal (INFO, LISTO, ATENCIÓN, FRENO) y su símbolo ISO. Las
+   acciones van después de una línea de troquel. FRENO = role="alert". */
+const SIMBOLO_PLACA = { info: 'info', listo: 'ok', atencion: 'alerta', freno: 'apagado' }
+const PALABRA_PLACA = { info: 'Info', listo: 'Listo', atencion: 'Atención', freno: 'Freno' }
+
+export function Placa({ tono = 'info', cabecera, titulo, children, acciones, className = '', role }) {
+  return (
+    <div className={`cr-placa cr-placa--${tono} ${className}`} role={role || (tono === 'freno' ? 'alert' : 'status')}>
+      <div className="cr-placa__in">
+        <p className="cr-placa__cab">
+          <SimboloIso forma={SIMBOLO_PLACA[tono]} className="h-3.5 w-3.5 shrink-0" />
+          <span>
+            {PALABRA_PLACA[tono]}
+            {cabecera ? ` · ${cabecera}` : ''}
+          </span>
+        </p>
+        <div className="cr-placa__cuerpo">
+          {titulo && <p className="cr-placa__tit">{titulo}</p>}
+          {children && <div>{children}</div>}
+          {acciones && <div className="cr-placa__pie">{acciones}</div>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Error de un envio: placa FRENO con role=alert para lectores de pantalla. */
 export function AvisoError({ children, className = '' }) {
   if (!children) return null
   return (
-    <div
-      className={`rounded-2xl p-4 text-sm ${className}`}
-      style={{ border: '1px solid #E2231A', background: 'rgba(226,35,26,0.06)' }}
-      role="alert"
-    >
-      <div className="font-semibold text-cr-red dark:text-cr-red-glow">{children}</div>
-    </div>
+    <Placa tono="freno" cabecera="no se pudo" className={className}>
+      <p className="font-semibold">{children}</p>
+    </Placa>
   )
 }
 
