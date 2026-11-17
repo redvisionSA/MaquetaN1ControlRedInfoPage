@@ -36,7 +36,7 @@ export default function Pie() {
                 <Link to="/#tecnologias">Tecnologías 3D</Link>
               </li>
               <li>
-                <Link to="/#proyectos">Macroproyectos</Link>
+                <Link to="/iared">Proyectos · IARED</Link>
               </li>
               <li>
                 <Link to="/#ubicacion">Ubicación</Link>

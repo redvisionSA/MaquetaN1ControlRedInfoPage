@@ -469,13 +469,220 @@ header.nav.menu-open .nav-links-mobile {
   border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
-/* Proyectos reducido: solo el encabezado de la division, sin la grilla */
-.cr-macro-corta .macro-head {
-  max-width: 820px;
-  margin-bottom: 0;
+/* IARED: empresa aparte que hace los proyectos. Panel tinta (no el azul de
+   Control Red) para que se lea como otra marca; la trama de puntos y el
+   boton blanco son los de la vieja division de proyectos de la v1. */
+.cr-iared {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(52, 74, 178, 0.45), transparent 60%),
+    linear-gradient(160deg, #0b0e1f, #15182b 70%);
 }
-.cr-macro-corta .macro-head p + p {
+[data-theme='dark'] .cr-iared {
+  border-block: 1px solid var(--border);
+}
+.cr-iared::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 1.5px 1.5px, rgba(255, 255, 255, 0.1) 1.5px, transparent 0);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+.cr-iared .container {
+  position: relative;
+  z-index: 1;
+}
+.cr-iared-ancla {
+  position: absolute;
+  top: 0;
+}
+.cr-iared-grid {
+  display: grid;
+  gap: 36px;
+  align-items: center;
+}
+@media (min-width: 921px) {
+  .cr-iared-grid {
+    grid-template-columns: 1.15fr 1fr;
+    gap: 56px;
+  }
+}
+.cr-iared-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 18px;
+}
+.cr-iared-marca {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.9rem;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  padding-left: 0.4em;
+  color: #fff;
+  border-left: 4px solid #8aa0ff;
+}
+.cr-iared-marca--grande {
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+}
+.cr-iared-logo {
+  height: 40px;
+  width: auto;
+}
+.cr-iared-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c9d2ff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.cr-iared h1,
+.cr-iared h2 {
+  color: #fff;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.cr-iared h1 {
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
+  max-width: 820px;
+}
+.cr-iared p {
   margin-top: 14px;
+  color: #d7dcfa;
+  line-height: 1.7;
+  max-width: 640px;
+}
+.cr-iared strong {
+  color: #fff;
+}
+.cr-iared-lead {
+  font-size: 1.08rem;
+}
+.cr-iared-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.cr-iared-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--blue-deep);
+  background: #fff;
+  transition: transform 200ms var(--ease), box-shadow 200ms var(--ease);
+}
+[data-theme='dark'] .cr-iared-cta {
+  color: #141b45;
+}
+.cr-iared-cta:hover {
+  box-shadow: 0 10px 26px -10px rgba(138, 160, 255, 0.8);
+}
+.cr-iared-cta:active {
+  transform: scale(0.97);
+}
+.cr-iared-cta:focus-visible {
+  outline: 3px solid #8aa0ff;
+  outline-offset: 3px;
+}
+/* Fuera del panel tinta: boton azul de la tienda */
+.cr-iared-cta--azul {
+  color: #fff;
+  background: var(--blue);
+}
+[data-theme='dark'] .cr-iared-cta--azul {
+  color: #fff;
+  background: #4a61cf;
+}
+.cr-iared .cr-iared-nota,
+.cr-iared-nota {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  color: #aebbff;
+}
+.cr-iared-alcance {
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 560px) and (max-width: 920px) {
+  .cr-iared-alcance {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.cr-iared-alcance li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius-m);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.cr-iared-alcance strong {
+  display: block;
+  font-size: 0.98rem;
+}
+.cr-iared-alcance li span span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #c9d2ff;
+}
+.cr-iared-icono {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  color: #8aa0ff;
+  background: rgba(138, 160, 255, 0.12);
+}
+.cr-iared-miga {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 22px;
+  font-size: 0.85rem;
+  color: #aebbff;
+}
+.cr-iared-miga a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.cr-iared-pagina > .cr-iared {
+  padding: 40px 0 52px;
+}
+.cr-iared-cuerpo {
+  display: grid;
+  gap: 48px;
+  padding-top: 48px;
+  padding-bottom: 56px;
+}
+@media (max-width: 640px) {
+  .cr-iared-cuerpo {
+    gap: 36px;
+    padding-top: 32px;
+  }
 }
 
 /* Tarjetas de tecnologias: enlace a los productos de esa tecnologia */

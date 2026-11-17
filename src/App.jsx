@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { TemaProvider } from './componentes/Tema.jsx'
 import Encabezado from './componentes/Encabezado.jsx'
 import Pie from './componentes/Pie.jsx'
@@ -17,6 +17,7 @@ const Producto = lazy(() => import('./paginas/Producto.jsx'))
 const Carrito = lazy(() => import('./paginas/Carrito.jsx'))
 const Favoritos = lazy(() => import('./paginas/Favoritos.jsx'))
 const NoEncontrada = lazy(() => import('./paginas/NoEncontrada.jsx'))
+const Iared = lazy(() => import('./paginas/Iared.jsx'))
 const cuenta = (nombre) => lazy(() => import('./paginas/Cuenta.jsx').then((m) => ({ default: m[nombre] })))
 const Ingresar = cuenta('Ingresar')
 const Activar = cuenta('Activar')
@@ -72,6 +73,10 @@ export default function App() {
                 <Route path="/producto/:slug" element={<Producto />} />
                 <Route path="/carrito" element={<Carrito />} />
                 <Route path="/favoritos" element={<Favoritos />} />
+                {/* Los proyectos los hace IARED (empresa aparte): las rutas viejas van ahi */}
+                <Route path="/iared" element={<Iared />} />
+                <Route path="/proyectos" element={<Navigate to="/iared" replace />} />
+                <Route path="/macroproyectos" element={<Navigate to="/iared" replace />} />
                 <Route path="/cuenta" element={<MiCuenta />} />
                 <Route path="/cuenta/ingresar" element={<Ingresar />} />
                 <Route path="/cuenta/activar" element={<Activar />} />

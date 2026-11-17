@@ -19,7 +19,7 @@ import { BotonTema } from './Tema.jsx'
 
 const SECCIONES = [
   { to: '/#tecnologias', label: 'Tecnologías 3D' },
-  { to: '/#proyectos', label: 'Proyectos' },
+  { to: '/iared', label: 'Proyectos · IARED' },
   { to: '/#ubicacion', label: 'Local de Flores' },
   { to: '/#preguntas-frecuentes', label: 'Preguntas frecuentes' },
 ]

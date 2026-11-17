@@ -40,7 +40,8 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
 | Tema | `src/componentes/Tema.jsx`: arranca siempre claro; avisa `themechange` (lo escuchan hero y partículas). |
 | Barra y pie | `src/componentes/Encabezado.jsx` (barra de confianza Hikvision + barra v1 + buscador, cuenta, favoritos, carrito; fila de departamentos desde 921 px; publica `--chrome-h` para el hero), `Pie.jsx` |
 | Vitrina v1 | `src/vitrina/hero.html`, `tecnologias.html` (HTML de la v1, imágenes extraídas a `public/img/`) y `montar.js` (scripts de la v1 con limpieza de listeners/observers/RAF/GPU al salir del inicio; generado una vez con `scripts/generar-montar.mjs`, ahora se edita a mano). Video del showroom en `public/video/`. |
-| Inicio | `src/paginas/Inicio.jsx`: hero → departamentos → carrusel → tecnologías (cada tarjeta enlaza a `/productos?q=…`) → marcas → respaldo → banda mayorista → proyectos/capacitaciones (reducido) → ubicación y canales → preguntas → banda CTA. |
+| Inicio | `src/paginas/Inicio.jsx`: hero → departamentos → carrusel → tecnologías (cada tarjeta enlaza a `/productos?q=…`) → marcas → respaldo → banda mayorista → **bloque IARED** → ubicación y canales → preguntas → banda CTA. |
+| IARED | `src/datos/iared.js` (único lugar con sus datos), `src/componentes/Iared.jsx` (marca, botón, bloque del inicio), `src/paginas/Iared.jsx` (`/iared`). Ver «IARED» abajo. |
 | Tienda (motores de RV) | `src/tienda/*` (catálogo, búsqueda y facetas, buscador, líneas, marcas, similares/compatibles, disponibilidad, carrito, WhatsApp, popularidad), `src/cuenta/*`, `src/paginas/{Catalogo,Producto,Carrito,Favoritos,Cuenta}.jsx` |
 | Datos de contacto | `src/datos/empresa.js` (fuente única; el JSON-LD de `index.html` es manual) |
 | Servidor | `api/pedido.js` (Resend, número `CR-W-AAMMDD-XXXXX`), `api/_popularidad.js`, `api/_limites.js`, `functions/` (adaptador `_vercel.js`, `api/pedido`, `api/evento`, `api/populares`) |
@@ -65,6 +66,20 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
   si hay sesión del ERP con el mismo correo de la cuenta; si no, plantilla fija con solo el número
   (nada del texto libre), a lo sumo 5 por red y 3 por correo por día, y sin D1 no sale. Turnstile
   queda como mejora si aparece abuso.
+
+## IARED: los proyectos son de otra empresa (17/11)
+Control Red **no ofrece proyectos** (relevamiento, ingeniería, integración, instalación, puesta en marcha,
+capacitación en obra, «llave en mano»). Los hace **IARED**, empresa aparte y totalmente independiente
+(marca en construcción). La tienda solo le da visibilidad y deriva: bloque en el inicio (`#iared`, con
+ancla `#proyectos` para enlaces viejos), página `/iared` (`/proyectos` y `/macroproyectos` redirigen ahí),
+«Proyectos · IARED» en la barra y en el pie. Las capacitaciones técnicas **para el gremio** siguen siendo de
+Control Red (pregunta frecuente); el hero dejó de prometer macroproyectos.
+- **Datos pendientes**: `src/datos/iared.js` tiene `url`, `whatsapp`, `email` y `logo` en `null`. Mientras no
+  haya canal propio, el botón abre el WhatsApp de Control Red con «Hola Control Red, quiero que IARED me
+  contacte por un proyecto.» y la página lo avisa (`AvisoRespaldo`); sin logo, «IARED» en tipografía. Al
+  completar un campo, el botón cambia solo (prioridad: sitio → WhatsApp → correo). **No inventar** dominio,
+  logo, cifras, clientes ni plazos de IARED.
+- Límite entre empresas: en `iared.js` no va nada de Control Red ni de REDVISION.
 
 ## ERP
 - Catálogo: `GET https://api-erp.redvision.com.ar/storefront/controlred/catalog`, **en producción**

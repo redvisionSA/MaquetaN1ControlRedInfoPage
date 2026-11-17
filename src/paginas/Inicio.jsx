@@ -10,6 +10,7 @@ import { IconoCamion, IconoEstrella, IconoLocal, IconoTecnico, IconoWhatsapp } f
 import EMPRESA from '../datos/empresa.js'
 import { enlaceConsulta } from '../tienda/whatsapp.js'
 import { usePagina } from './Pagina.jsx'
+import { BloqueIared } from '../componentes/Iared.jsx'
 import heroHtml from '../vitrina/hero.html?raw'
 import tecnologiasHtml from '../vitrina/tecnologias.html?raw'
 
@@ -23,7 +24,8 @@ import tecnologiasHtml from '../vitrina/tecnologias.html?raw'
  *   3. Un solo carrusel: lo mas buscado y cotizado (o destacados).
  *   4. Tecnologias de la v1 (showroom Hikvision), cada una con su enlace a la tienda.
  *   5. Marcas, respaldo y canal mayorista.
- *   6. Lo institucional, reducido: proyectos, local de Flores y preguntas frecuentes.
+ *   6. IARED: los proyectos los hace otra empresa; aca solo se la presenta y se deriva.
+ *   7. Lo institucional, reducido: local de Flores y preguntas frecuentes.
  */
 
 /* Respaldo: solo lo que la web v1 ya afirmaba de Control Red (sin cifras nuevas) */
@@ -161,37 +163,6 @@ function SinCatalogo() {
         )}
       </div>
     </div>
-  )
-}
-
-/* ------------------------------------------------ Institucional reducido */
-function Proyectos() {
-  return (
-    <section className="macro v1-seccion cr-macro-corta" id="proyectos">
-      <div className="container">
-        <div className="macro-head">
-          <span className="section-kicker">División de Proyectos</span>
-          <h2>Macroproyectos de seguridad electrónica llave en mano</h2>
-          <p>
-            Además de la tienda, Control Red cuenta con una división propia de ingeniería que diseña, integra y ejecuta{' '}
-            <strong style={{ color: '#fff' }}>macroproyectos de seguridad electrónica en todo el país</strong>: CCTV, control de acceso,
-            alarmas y automatización en una sola solución, desde el relevamiento hasta la puesta en marcha y el soporte posterior.
-          </p>
-          <p>
-            Y para el gremio, <strong style={{ color: '#fff' }}>capacitaciones técnicas sin costo</strong> en nuestro local de Flores. No hay
-            fechas abiertas por el momento: escribinos y te avisamos de la próxima.
-          </p>
-          <div className="macro-cta">
-            <a href={enlaceConsulta('proyecto')} target="_blank" rel="noopener noreferrer" className="btn" style={{ background: '#fff', color: 'var(--blue-deep)' }}>
-              Consultar por un proyecto
-            </a>
-            <a href={enlaceConsulta('capacitacion')} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
-              Avisame de la próxima capacitación
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
   )
 }
 
@@ -359,7 +330,11 @@ const PREGUNTAS = [
       <>
         Sí. De forma periódica dictamos <strong>capacitaciones técnicas sin costo</strong> para instaladores, integradores, personal de
         mantenimiento de consorcios y equipos técnicos de empresas clientes, sobre configuración de NVR/DVR y cámaras IP, redes, control de acceso,
-        biometría y centrales de alarma.
+        biometría y centrales de alarma. No hay fechas abiertas por el momento:{' '}
+        <a href={enlaceConsulta('capacitacion')} target="_blank" rel="noopener noreferrer">
+          escribinos
+        </a>{' '}
+        y te avisamos de la próxima.
       </>
     ),
   },
@@ -472,7 +447,7 @@ export default function Inicio() {
           <BandaMayorista />
         </div>
 
-        <Proyectos />
+        <BloqueIared />
         <Ubicacion />
         <Preguntas />
         <BandaCta />
