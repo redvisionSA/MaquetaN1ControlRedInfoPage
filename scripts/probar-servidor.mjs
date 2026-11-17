@@ -54,6 +54,8 @@ globalThis.fetch = async (url, op = {}) => {
     return new Response(JSON.stringify({ products: [
       { id: 'p1', name: 'Cámara ColorVu', sku: 'DS-1', price: '100000.00' },
       { id: 'p2', name: 'NVR 8', sku: 'DS-2', price: '250000.50' },
+    ], combos: [
+      { id: 'c1', name: 'Kit 4 cámaras + NVR', price: '640000.00', components: [{ id: 'p1', sku: 'DS-1', name: 'Cámara ColorVu', qty: 4 }, { id: 'p2', sku: 'DS-2', name: 'NVR 8', qty: 1 }] },
     ] }), { status: 200 })
   }
   if (String(url).endsWith('/shop/controlred/me')) return new Response(JSON.stringify({ name: 'Ana SRL', email: 'ANA@ejemplo.com', username: '30111' }), { status: 200 })
@@ -96,6 +98,18 @@ const cliente = { nombre: 'Ana', telefono: '1122334455', email: 'ana@ejemplo.com
   assert.ok(pedidosUrl.some((u) => u.includes('/storefront/controlred/catalog')))
   assert.ok(!pedidosUrl.some((u) => /\/storefront\/catalog|\/shop\/redvision/.test(u)), 'nunca lee datos de RV')
   assert.deepEqual(DB.filas.map((f) => [f.producto, f.tipo]), [['p1', 'pedido']])
+}
+
+// 2b) Combo de ML: precio del ERP (nunca el del navegador), con lo que trae a la vista de ventas
+{
+  const x = res()
+  await pedido({ method: 'POST', headers: {}, env: { RESEND_API_KEY: 'test' }, body: JSON.stringify({ cliente, items: [{ id: 'c1', cantidad: 2, precio: 1 }] }) }, x)
+  assert.equal(x.r.code, 200, JSON.stringify(x.r.body))
+  assert.equal(x.r.body.total, 1280000)
+  const correo = correos.at(-1)
+  assert.match(correo.html, /Kit 4 cámaras \+ NVR/)
+  assert.match(correo.html, /Combo: 4 × DS-1 \+ 1 × DS-2/)
+  assert.match(correo.text, /\(combo: 4 × DS-1 \+ 1 × DS-2\)/)
 }
 
 // 3) evento: el navegador no puede declarar "pedido"; ids fuera del catalogo no cuentan

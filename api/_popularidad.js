@@ -61,7 +61,7 @@ export async function idsDelCatalogo(env) {
   const r = await fetch(url, { headers: { Accept: 'application/json' } })
   if (!r.ok) throw new Error(`Catálogo HTTP ${r.status}`)
   const json = await r.json()
-  const ids = new Set((json.products || []).map((p) => String(p.id)))
+  const ids = new Set([...(json.products || []), ...(json.combos || [])].map((p) => String(p.id)))
   cacheIds = { ids, hasta: Date.now() + 5 * 60_000 }
   return ids
 }

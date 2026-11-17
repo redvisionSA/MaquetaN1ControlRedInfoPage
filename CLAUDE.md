@@ -71,6 +71,7 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
   desde el 16/11 (1574 productos al probar; precio = Gremio de CR con IVA; disponibilidad de los
   depósitos MAIN de CR). Contrato: `docs/CATALOGO_API.md`. CORS solo para controlred.com.ar/www.
 - Cuentas: `/shop/controlred` (encendidas: `me` responde 401 sin token).
+- **Combos de MercadoLibre** (17/11, contrato v2, aditivo): el catálogo trae `combos[]` (los aprobó una persona en el ERP, «Ofertas en la web»; precio = suma de sus productos a Gremio con IVA, calculado por el ERP). `catalogo.js` los suma como productos con `combo.componentes` (carrito, favoritos, búsqueda, categoría); la ficha lista lo que trae; `api/pedido.js` los busca en `combos` y el correo detalla el combo. Sin enlace a ML.
 - En desarrollo: `.env.development.local` (no versionado, solo lo lee `npm run dev`) con
   `VITE_CATALOGO_URL=/erp/storefront/controlred/catalog` y `VITE_CUENTAS_URL=/erp/shop/controlred`
   usa el proxy `/erp` de `vite.config.js` contra **producción** (ojo con las cuentas: son reales).
