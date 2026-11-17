@@ -201,7 +201,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   color:#C9D2FF;
   font-weight:500;
 }
-.trust-bar img{height:20px;width:auto;}
+.trust-bar img{height:21px;width:auto;}
 
 /* Theme-swap: alterna entre variante clara/oscura de un logo según el tema activo */
 .tsw-dark{ display:none; }
@@ -770,7 +770,7 @@ header.nav.menu-open .nav-links-mobile{
 }
 .cta-band h2{ font-size:clamp(1.5rem,2.4vw,2rem); max-width:20ch; }
 .cta-band .powered-mini{ display:flex; align-items:center; gap:10px; margin-top:10px; }
-.cta-band .powered-mini img{ height:16px; }
+.cta-band .powered-mini img{ height:17px; width:auto; }
 .cta-band .powered-mini span{ font-size:.82rem; color:var(--text-muted); font-weight:600; }
 
 /* ============ FOOTER ============ */
@@ -839,7 +839,7 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
   .trust-bar .container{ flex-wrap:nowrap; gap:10px; }
   .trust-bar span{ font-size:.76rem; white-space:nowrap; }
   .trust-bar span:first-child, .trust-bar span:first-child + .trust-divider{ display:none; }
-  .trust-bar img{ height:16px; }
+  .trust-bar img{ height:17px; }
 
   .brand img{ height:26px; }
   .theme-toggle{ width:44px; height:44px; }
@@ -959,7 +959,7 @@ footer{ background:var(--blue-deep); color:#C9CEEE; padding:64px 0 28px; }
   font-size:.82rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
   color:var(--text-muted);
 }
-.tech-kicker img{ height:14px; width:auto; }
+.tech-kicker img{ height:15px; width:auto; }
 .tech-kicker .sep{ width:1px; height:16px; background:var(--border-strong); }
 .tech-kicker .live{
   display:inline-flex; align-items:center; gap:7px; color:var(--hik-red);

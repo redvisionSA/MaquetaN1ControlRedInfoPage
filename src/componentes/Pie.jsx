@@ -14,7 +14,7 @@ export default function Pie() {
       <div className="container">
         <div className="footer-grid">
           <div className="footer-brand">
-            <img src="/img/controlred-oscuro.webp" alt="ControlRed" width="194" height="30" loading="lazy" style={{ height: 30, width: 'auto' }} />
+            <img src="/img/controlred-logo-oscuro.png" alt="ControlRed" width="184" height="30" loading="lazy" style={{ height: 30, width: 'auto' }} />
             <p>
               Empresa argentina especializada en la comercialización, distribución y provisión de insumos de seguridad electrónica y
               tecnología. Hik Tech Ambassador oficial de Hikvision.

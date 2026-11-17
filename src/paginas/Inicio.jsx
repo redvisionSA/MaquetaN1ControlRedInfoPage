@@ -392,8 +392,8 @@ function BandaCta() {
         <div>
           <h2>¿No encontrás lo que buscás? Te lo conseguimos.</h2>
           <div className="powered-mini">
-            <img className="tsw-light" src="/img/hikvision-claro.webp" alt="Hikvision" width="110" height="14" loading="lazy" />
-            <img className="tsw-dark" src="/img/hikvision-oscuro.webp" alt="Hikvision" width="110" height="14" loading="lazy" />
+            <img className="tsw-light" src="/marcas/hikvision.svg" alt="Hikvision" width="127" height="17" loading="lazy" />
+            <img className="tsw-dark" src="/marcas/hikvision-blanco.svg" alt="Hikvision" width="127" height="17" loading="lazy" />
             <span>Tecnología respaldada por Hikvision</span>
           </div>
         </div>
