@@ -141,8 +141,8 @@ export default function Encabezado() {
         <div className="container">
           <span>Distribuidor oficial de tecnología</span>
           <div className="trust-divider" />
-          <img className="tsw-light" src="/img/hikvision-claro.webp" alt="Hikvision" width="110" height="14" />
-          <img className="tsw-dark" src="/img/hikvision-oscuro.webp" alt="Hikvision" width="110" height="14" />
+          {/* La barra es azul en los dos temas: Hikvision va siempre en blanco (negativo del archivo oficial) */}
+          <img className="logo-blanco" src="/marcas/hikvision.png" alt="Hikvision" width="157" height="21" />
           <div className="trust-divider" />
           <span>Hik Tech Ambassador oficial</span>
         </div>

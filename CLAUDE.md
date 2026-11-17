@@ -51,6 +51,12 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
 - **Marcas**: Hikvision `oficial: true` (sello «Hik Tech Ambassador oficial» en su ficha, `SelloHikvision.jsx`);
   Dahua es una marca más. Tecnologías nuevas en `specs.js`: TandemVu, DarkFighter, **Turbo HD**
   (los compatibles comparan IP contra analógico HD, Turbo HD o HDCVI).
+- **Logos (17/11):** un solo archivo por marca en `public/marcas/` (Dahua: SVG transparente). Hikvision
+  sale siempre de `marcas/hikvision.png` (1024 px): a color en claro, en blanco con `.logo-blanco` en oscuro
+  y siempre en blanco sobre la barra azul de confianza. `LogoMarca` mide con `medidaLogo` (`marcas.js`:
+  peso visual parejo por `proporcion` y `tinta`), alt = nombre oficial; sin pastilla, en oscuro va sobre
+  placa blanca (`.cr-logo-marca`). `og-image.jpg` (1200x630) en la raíz de `public/`: la URL vieja
+  `/assets/og-image.jpg` nunca existió (devolvía la página).
 - **Rojo** `cr-red` (#E2231A) solo para lo que frena o apura (sin stock, últimas unidades, errores);
   el azul `cr-blue` (#344AB2) es el de los botones.
 - **Destacados del inicio**: el ERP manda `featured: false`; sin ranking de popularidad, el carrusel

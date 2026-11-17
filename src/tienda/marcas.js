@@ -8,8 +8,14 @@ import { normalizarTexto } from './formato.js'
  * donde se habla de esa marca: tarjeta, ficha, filtro, portada de marca.
  *
  * Logos: archivos oficiales en public/marcas/ (provistos por la empresa, sin
- * redibujar ni recolorear; siempre sobre blanco). Si una marca no tiene logo
- * (`logo: null`), se muestra su nombre en texto, nunca un dibujo propio.
+ * redibujar ni recolorear; fondo transparente y, en el tema oscuro, siempre
+ * sobre una placa blanca). Si una marca no tiene logo (`logo: null`), se
+ * muestra su nombre en texto, nunca un dibujo propio.
+ *
+ * Tamaño: nunca se igualan por alto (Hikvision, 7,5:1, se ve enorme al lado de
+ * TP-Link, 2,6:1). `medidaLogo` iguala el peso visual con `proporcion` (ancho /
+ * alto del archivo) y `tinta` (fraccion del alto que ocupa el dibujo: el
+ * resto es aire transparente del propio archivo).
  *
  * Colores (franjas y detalles): tomados de los archivos oficiales.
  *   Hikvision  #E2231A  rojo Hikvision de la identidad de Control Red (marca de
@@ -28,6 +34,7 @@ export const MARCAS_DISPOSITIVOS = [
     color: '#E2231A',
     logo: '/marcas/hikvision.png',
     proporcion: 1024 / 137,
+    tinta: 129 / 137,
     oficial: true,
     patron: /hikvision|hik ?connect|hilook/,
     texto: 'Marca de referencia de Control Red: videovigilancia, grabación, control de acceso y alarmas.',
@@ -37,7 +44,7 @@ export const MARCAS_DISPOSITIVOS = [
     nombre: 'Dahua Technology',
     color: '#326795',
     logo: '/marcas/dahua.svg',
-    proporcion: 2560 / 762,
+    proporcion: 2560 / 768,
     oficial: false,
     patron: /dahua/,
     texto: 'Cámaras, grabadores, control de accesos y alarmas Dahua.',
@@ -48,6 +55,7 @@ export const MARCAS_DISPOSITIVOS = [
     color: '#F08C00',
     logo: '/marcas/imou.png',
     proporcion: 300 / 81,
+    tinta: 69 / 81,
     oficial: false,
     patron: /\bimou\b/,
     texto: 'Cámaras Wi-Fi y seguridad para hogar y pequeño comercio, con aplicación propia.',
@@ -98,4 +106,18 @@ export function identidadDe(marca) {
   if (!marca) return null
   const t = normalizarTexto(`${marca.slug || ''} ${marca.nombre || marca.name || ''}`)
   return MARCAS_DISPOSITIVOS.find((m) => m.patron.test(t)) || null
+}
+
+/**
+ * Medida optica de un logo para un renglon de `alto` px: iguala el area
+ * aparente (alto * raiz(3,4 / proporcion), con 3,4 = un logo «tipico» como
+ * Dahua o EZVIZ), compensa el aire transparente del archivo (`tinta`) y
+ * respeta `anchoMax`. Devuelve alto y ancho del <img> (tambien sirven de
+ * width/height: el lugar queda reservado y no hay saltos al cargar).
+ */
+export function medidaLogo(id, alto, anchoMax = Infinity) {
+  const factor = Math.min(1.15, Math.max(0.6, Math.sqrt(3.4 / id.proporcion)))
+  let h = Math.min(alto * 1.2, (alto * factor) / (id.tinta || 1))
+  if (h * id.proporcion > anchoMax) h = anchoMax / id.proporcion
+  return { alto: Math.round(h * 2) / 2, ancho: Math.round(h * id.proporcion) }
 }
