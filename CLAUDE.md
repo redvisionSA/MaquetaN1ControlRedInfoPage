@@ -21,6 +21,17 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
   solo lo que la v1 ya afirmaba (envíos a todo el país, retiro en Flores, MercadoLíder Platinum,
   asesoramiento por WhatsApp). La v1 no tenía reseñas: no hay sección de reseñas.
 - **El navegador nunca manda un precio**: `api/pedido.js` vuelve a leer el ERP.
+- **Precio a la vista sin IVA, «+ IVA» al lado; se cobra con IVA** (17/11, pedido del usuario: que el
+  número visible sea el más bajo). El ERP manda `netPrice` (sin IVA) junto a `price` (final con IVA) en
+  `products[]`, `combos[]` y `me/prices`; `catalogo.js` los lee como `precioSinIva` y `precio`. **El front
+  nunca calcula IVA** (ni divide por 1,21: las alícuotas varían, 10,5 % y 21 %). Un solo componente de
+  precio: `Precio`/`Importe`/`EtiquetaIva` en `piezas.jsx` (etiqueta `.cr-iva`, mini placa mono pegada al
+  número); filtro y orden usan `precioVisible` (`formato.js`), el mismo número que se ve. Carrito y cajón:
+  `ResumenIva` = subtotal sin IVA, IVA (= total con IVA − subtotal sin IVA, restando valores del ERP en
+  centavos) y **total con IVA** (`.cr-total`). Sin `netPrice` (ERP viejo o caché): el con IVA con «IVA
+  incluido» y el resumen solo con el total. Quedan **con IVA** a propósito: JSON-LD `offers.price` y la meta
+  description de la ficha (el precio real a pagar), `api/pedido.js` y su correo, el total de la confirmación
+  y la línea «Total con IVA» del WhatsApp; las líneas del WhatsApp dicen «$ X + IVA».
 - **Límite entre empresas**: la tienda lee solo `/storefront/controlred/catalog` y `/shop/controlred`.
   Nunca datos, precios, stock ni marca de REDVISION.
 - **WebGL solo en el inicio** (`src/vitrina/montar.js` se importa dinámicamente desde `Inicio.jsx`).
@@ -134,6 +145,7 @@ Control Red (pregunta frecuente); el hero dejó de prometer macroproyectos.
   desde el 16/11 (1574 productos al probar; precio = Gremio de CR con IVA; disponibilidad de los
   depósitos MAIN de CR). Contrato: `docs/CATALOGO_API.md`. CORS solo para controlred.com.ar/www.
 - Cuentas: `/shop/controlred` (encendidas: `me` responde 401 sin token).
+- **`netPrice`** (17/11, aditivo): precio sin IVA calculado por el ERP en `products[]`, `combos[]` y `me/prices` (ver la regla de precios arriba).
 - **Combos de MercadoLibre** (17/11, contrato v2, aditivo): el catálogo trae `combos[]` (los aprobó una persona en el ERP, «Ofertas en la web»; precio = suma de sus productos a Gremio con IVA, calculado por el ERP). `catalogo.js` los suma como productos con `combo.componentes` (carrito, favoritos, búsqueda, categoría); la ficha lista lo que trae; `api/pedido.js` los busca en `combos` y el correo detalla el combo. Sin enlace a ML.
 - En desarrollo: `.env.development.local` (no versionado, solo lo lee `npm run dev`) con
   `VITE_CATALOGO_URL=/erp/storefront/controlred/catalog` y `VITE_CUENTAS_URL=/erp/shop/controlred`

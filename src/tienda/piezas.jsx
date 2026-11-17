@@ -1,33 +1,114 @@
 import { Link } from 'react-router-dom'
 import { DISPONIBILIDAD } from './catalogo.js'
 import { medidaLogo } from './marcas.js'
-import { formatoPrecio } from './formato.js'
+import { formatoPrecio, precioVisible } from './formato.js'
 import { lineaPorId } from './lineas.jsx'
 import { useTienda } from './TiendaContext.jsx'
 import { IconoCorazon } from './Iconos.jsx'
 import { useCuenta } from '../cuenta/CuentaContext.jsx'
 
 /* ------------------------------------------------------------- Precio */
-/* `canal`: lista del cliente con sesion («Mayorista», «Distribuidor»); se
-   indica junto al precio para que nunca se confunda con el publico. */
-export function Precio({ valor, canal = null, className = '', grande = false }) {
+/* Regla de precios (17/11): todo precio a la vista es el SIN IVA que calcula
+   el ERP, con la etiqueta «+ IVA» pegada al numero (se lee como parte del
+   precio, como la unidad en un display de tablero). Lo que se cobra es el
+   final con IVA: se ve completo en el resumen del carrito. Si el ERP no manda
+   el sin IVA, va el final con «IVA incluido» (respaldo honesto, sin calcular). */
+const TAM_PRECIO = {
+  sm: 'text-sm',
+  md: 'text-lg',
+  lg: 'text-3xl sm:text-4xl',
+}
+
+/** Etiqueta «+ IVA»: mini placa mono, misma tinta que el precio. */
+export function EtiquetaIva({ grande = false, className = '' }) {
+  return (
+    <span className={`cr-iva ${grande ? 'cr-iva--grande' : ''} ${className}`}>
+      <span aria-hidden="true">+ IVA</span>
+      <span className="sr-only">más IVA</span>
+    </span>
+  )
+}
+
+/**
+ * Un importe con su condicion de IVA. `masIva`: el valor es sin IVA y lleva
+ * «+ IVA»; si no, es el final y dice «IVA incluido». `apilar`: en telefono la
+ * etiqueta va debajo del numero (listas angostas como el buscador).
+ */
+export function Importe({ valor, masIva, tamano = 'md', apilar = false, className = '' }) {
   const texto = formatoPrecio(valor)
+  if (!texto) return null
+  return (
+    <span
+      className={`inline-flex max-w-full gap-x-1.5 gap-y-0.5 ${apilar ? 'flex-col items-end sm:flex-row sm:flex-wrap sm:items-baseline' : 'flex-wrap items-baseline'} ${className}`}
+    >
+      <span className={`num whitespace-nowrap font-display font-bold tracking-tight text-black dark:text-white ${TAM_PRECIO[tamano]}`}>{texto}</span>
+      {masIva ? (
+        <EtiquetaIva grande={tamano === 'lg'} />
+      ) : (
+        <span className={`whitespace-nowrap text-black/55 dark:text-white/55 ${tamano === 'lg' ? 'text-xs' : 'text-[11px]'}`}>IVA incluido</span>
+      )}
+    </span>
+  )
+}
+
+/**
+ * Precio de un producto, el unico componente de precio de la tienda: tarjeta,
+ * ficha, barra fija, buscador, sugeridos. `canal`: lista del cliente con
+ * sesion («Mayorista», «Distribuidor»); se indica junto al precio para que
+ * nunca se confunda con el publico. `consultar`: texto sin precio.
+ */
+export function Precio({ producto, tamano = 'md', apilar = false, className = '', consultar = 'Consultar precio' }) {
+  const valor = precioVisible(producto)
+  const canal = producto?.canal || null
   const lista = canal ? (
-    <span className={`block font-display font-semibold uppercase tracking-wide text-black/60 dark:text-white/65 ${grande ? 'mt-1 text-xs' : 'text-[10px]'}`}>Precio {canal}</span>
+    <span className={`block font-display font-semibold uppercase tracking-wide text-black/60 dark:text-white/65 ${tamano === 'lg' ? 'mt-1 text-xs' : 'text-[10px]'}`}>Precio {canal}</span>
   ) : null
-  if (!texto) {
+  if (valor === null) {
     return (
-      <span className={`inline-block font-display font-semibold text-black/80 dark:text-white/85 ${grande ? 'text-xl' : 'text-sm'} ${className}`}>
-        Consultar precio
+      <span className={`inline-block font-display font-semibold text-black/80 dark:text-white/85 ${tamano === 'lg' ? 'text-xl' : 'text-sm'} ${className}`}>
+        {consultar}
         {lista}
       </span>
     )
   }
   return (
-    <span className={`inline-block ${className}`}>
-      <span className={`num font-display font-bold tracking-tight text-black dark:text-white ${grande ? 'text-3xl sm:text-4xl' : 'text-lg'}`}>{texto}</span>
+    <span className={`inline-block max-w-full ${className}`}>
+      <Importe valor={valor} masIva={producto.precioSinIva != null} tamano={tamano} apilar={apilar} />
       {lista}
     </span>
+  )
+}
+
+/**
+ * Resumen del carrito (cajon y pagina): subtotal sin IVA, IVA y el total con
+ * IVA, que es lo que se paga. Todo viene de TiendaContext (`resumen`), que
+ * suma lo que manda el ERP. Sin desglose (algun item sin el sin IVA), solo el
+ * total con IVA. `filas`: lineas extra antes del total (envio).
+ */
+export function ResumenIva({ resumen, compacto = false, filas = null, tituloTotal = 'Total con IVA' }) {
+  const desglose = resumen.subtotalSinIva !== null && resumen.iva !== null
+  return (
+    <div>
+      <dl className={`${compacto ? 'space-y-1' : 'space-y-2'} text-sm`}>
+        {desglose && (
+          <>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="cr-muted">Subtotal sin IVA{resumen.unidades ? ` (${resumen.unidades} ${resumen.unidades === 1 ? 'unidad' : 'unidades'})` : ''}</dt>
+              <dd className="num font-semibold text-black dark:text-white">{formatoPrecio(resumen.subtotalSinIva)}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="cr-muted">IVA</dt>
+              <dd className="num font-semibold text-black dark:text-white">{formatoPrecio(resumen.iva)}</dd>
+            </div>
+          </>
+        )}
+        {filas}
+      </dl>
+      <div className={`cr-total ${compacto ? 'mt-2.5' : 'mt-4'}`}>
+        <span className="cr-total__cab">{tituloTotal}</span>
+        <span className={`num font-display font-bold text-black dark:text-white ${compacto ? 'text-2xl' : 'text-3xl'}`}>{formatoPrecio(resumen.total) || '$ 0'}</span>
+      </div>
+    </div>
   )
 }
 

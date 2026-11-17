@@ -21,6 +21,11 @@ const P = (id, name, brand, category, price, availability, extra = {}) => ({
   category,
   imageUrl: null,
   price: price === null ? null : String(price),
+  /* Sin IVA como lo manda el ERP (`netPrice`, contrato del 17/11). Solo en la
+     demo se deriva del final, para simular alicuotas distintas (21 % por
+     defecto, 10,5 % con `iva: 10.5`); la tienda nunca hace esta cuenta.
+     `sinNeto: true` simula un ERP viejo: sin el campo (respaldo «IVA incluido»). */
+  ...(extra.sinNeto ? {} : { netPrice: price === null ? null : (price / (1 + (extra.iva ?? 21) / 100)).toFixed(2) }),
   availability,
   featured: Boolean(extra.featured),
 })
@@ -62,12 +67,13 @@ export default {
     P(4, 'Cámara Turbo HD domo 5 MP lente 2,8 mm', 'hikvision', 'camaras-turbo', 42700, 'disponible'),
     P(5, 'Cámara Wi-Fi interior motorizada 360°', 'ezviz', 'camaras-ip', 54900, 'disponible', { featured: true }),
     P(6, 'Grabador NVR 8 canales PoE 4K', 'hikvision', 'grabadores', 289000, 'disponible', {
+      iva: 10.5,
       featured: true,
       description: 'Ocho puertos PoE integrados, un disco de hasta 16 TB, búsqueda inteligente por personas.',
     }),
-    P(7, 'Grabador DVR 4 canales 1080p Lite', 'hikvision', 'grabadores', 78400, 'ultimas'),
-    P(8, 'Disco rígido de vigilancia 2 TB', 'generico', 'discos', 96200, 'disponible'),
-    P(9, 'Disco rígido de vigilancia 4 TB', 'generico', 'discos', 158000, 'a_pedido'),
+    P(7, 'Grabador DVR 4 canales 1080p Lite', 'hikvision', 'grabadores', 78400, 'ultimas', { iva: 10.5 }),
+    P(8, 'Disco rígido de vigilancia 2 TB', 'generico', 'discos', 96200, 'disponible', { iva: 10.5 }),
+    P(9, 'Disco rígido de vigilancia 4 TB', 'generico', 'discos', 158000, 'a_pedido', { iva: 10.5 }),
     P(10, 'Terminal de reconocimiento facial con control de presentismo', 'hikvision', 'control-acceso', 465000, 'a_pedido', {
       featured: true,
     }),
@@ -78,16 +84,16 @@ export default {
     P(13, 'Sensor infrarrojo pasivo inalámbrico', 'hikvision', 'alarmas', 27800, 'sin_stock'),
     P(14, 'Electrificador para cerco eléctrico 10.000 m', 'generico', 'cercos', 86500, 'disponible'),
     P(15, 'Placa controladora para portón corredizo', 'generico', 'portones', 45200, 'disponible'),
-    P(16, 'Switch PoE 8 puertos + 2 uplink', 'tp-link', 'switches', 134000, 'disponible', { featured: true }),
+    P(16, 'Switch PoE 8 puertos + 2 uplink', 'tp-link', 'switches', 134000, 'disponible', { iva: 10.5, featured: true }),
     P(17, 'Bobina de cable UTP Cat6 exterior 305 m', 'generico', 'cableado', 189000, 'disponible'),
     P(18, 'Fuente switching 12 V 10 A', 'generico', 'fuentes', 24600, 'disponible'),
     P(19, 'UPS interactiva 1200 VA', 'generico', 'fuentes', 172000, 'ultimas'),
-    P(20, 'Caja de conexión estanca para cámara', 'hikvision', 'soportes', 9800, 'disponible'),
+    P(20, 'Caja de conexión estanca para cámara', 'hikvision', 'soportes', 9800, 'disponible', { sinNeto: true }),
     P(21, 'Cámara PTZ 4 MP zoom óptico 25x TandemVu', 'hikvision', 'camaras-ip', null, 'a_pedido', {
       description: 'Precio según proyecto: consultá disponibilidad y condiciones.',
     }),
     P(22, 'Cámara IP turret 4 MP ColorVu lente 2,8 mm', 'hikvision', 'camaras-ip', 104900, 'disponible', { featured: true }),
-    P(23, 'Grabador NVR 16 canales PoE 4K', 'hikvision', 'grabadores', 412000, 'a_pedido'),
+    P(23, 'Grabador NVR 16 canales PoE 4K', 'hikvision', 'grabadores', 412000, 'a_pedido', { iva: 10.5 }),
   ],
   /* Combo de MercadoLibre aprobado en el ERP (contrato v2, 17/11): precio y disponibilidad ficticios */
   combos: [
@@ -100,6 +106,7 @@ export default {
       imageUrl: null,
       images: [],
       price: '420000.00',
+      netPrice: '347107.44',
       availability: 'disponible',
       components: [
         { id: 'demo-3', slug: 'demo-3', sku: 'DEMO-0003', name: 'Cámara Turbo HD bullet 2 MP con infrarrojo 30 m', qty: 4 },

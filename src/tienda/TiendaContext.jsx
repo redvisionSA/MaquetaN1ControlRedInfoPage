@@ -24,6 +24,8 @@ const TiendaContext = createContext(null)
 const CLAVES = { carrito: 'cr-carrito-v1', favoritos: 'cr-favoritos-v1', vistos: 'cr-vistos-v1' }
 const MAX_CANTIDAD = 99
 const MAX_VISTOS = 12
+/* Importe del ERP (string decimal ya convertido a numero) a centavos enteros */
+const centavos = (n) => Math.round(n * 100)
 
 function leer(clave, porDefecto) {
   try {
@@ -132,18 +134,35 @@ export function TiendaProvider({ children }) {
         return {
           ...item,
           producto,
-          subtotal: producto && producto.precio !== null ? producto.precio * item.cantidad : null,
+          /* Con IVA (lo que se cobra) y sin IVA (lo que se muestra), en centavos
+             para no arrastrar decimales de coma flotante */
+          subtotal: producto && producto.precio !== null ? (centavos(producto.precio) * item.cantidad) / 100 : null,
+          subtotalSinIva:
+            producto && producto.precio !== null && producto.precioSinIva != null
+              ? (centavos(producto.precioSinIva) * item.cantidad) / 100
+              : null,
         }
       }),
     [carrito, catalogo.datos]
   )
 
+  /* Resumen transparente: subtotal sin IVA, IVA y total con IVA. El IVA es la
+     resta de los valores que manda el ERP (con IVA menos sin IVA), nunca una
+     alicuota aplicada aca. Si alguna linea con precio no trae el sin IVA, solo
+     se conoce el total con IVA (`subtotalSinIva` e `iva` en null). */
   const resumen = useMemo(() => {
     const unidades = carrito.reduce((s, i) => s + i.cantidad, 0)
     const conPrecio = lineas.filter((l) => l.subtotal !== null)
+    const totalC = conPrecio.reduce((s, l) => s + centavos(l.subtotal), 0)
+    const desglose = conPrecio.length > 0 && conPrecio.every((l) => l.subtotalSinIva !== null)
+    const sinIvaC = desglose ? conPrecio.reduce((s, l) => s + centavos(l.subtotalSinIva), 0) : null
     return {
       unidades,
-      subtotal: conPrecio.reduce((s, l) => s + l.subtotal, 0),
+      /* `subtotal` y `total`: el mismo importe con IVA (nombre viejo y nuevo) */
+      subtotal: totalC / 100,
+      total: totalC / 100,
+      subtotalSinIva: desglose ? sinIvaC / 100 : null,
+      iva: desglose ? (totalC - sinIvaC) / 100 : null,
       hayAConfirmar: lineas.some((l) => l.subtotal === null),
     }
   }, [carrito, lineas])

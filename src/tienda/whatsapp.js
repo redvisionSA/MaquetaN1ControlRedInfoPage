@@ -17,12 +17,25 @@ export function mensajePedido({ numero, lineas, cliente, lista }) {
   const filas = lineas
     .filter((l) => l.producto)
     .map((l) => {
-      const precio = l.subtotal !== null ? ` — ${formatoPrecio(l.subtotal)}` : ' — precio a confirmar'
+      /* Como en la tienda: sin IVA «+ IVA»; si el ERP no mando el sin IVA, el final con IVA */
+      const precio =
+        l.subtotal === null
+          ? ' — precio a confirmar'
+          : l.subtotalSinIva != null
+            ? ` — ${formatoPrecio(l.subtotalSinIva)} + IVA`
+            : ` — ${formatoPrecio(l.subtotal)} IVA incluido`
       return `• ${l.cantidad} x ${l.producto.nombre}${l.producto.sku ? ` [${l.producto.sku}]` : ''}${precio}`
     })
+  /* Total con IVA (lo que se paga), solo si todas las lineas tienen precio */
+  const conProducto = lineas.filter((l) => l.producto)
+  const total =
+    conProducto.length && conProducto.every((l) => l.subtotal !== null)
+      ? conProducto.reduce((s, l) => s + Math.round(l.subtotal * 100), 0) / 100
+      : null
   return [
     `Hola Control Red, quiero confirmar el pedido${numero ? ` ${numero}` : ''} hecho en ${EMPRESA.dominio}:`,
     ...filas,
+    total !== null ? `Total con IVA: ${formatoPrecio(total)}` : null,
     lista ? `Precios de mi lista ${lista} (cuenta de la tienda).` : null,
     cliente?.nombre ? `Nombre: ${cliente.nombre}` : null,
     cliente?.entrega ? `Entrega: ${cliente.entrega}` : null,

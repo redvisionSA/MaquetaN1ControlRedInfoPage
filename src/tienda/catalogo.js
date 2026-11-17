@@ -47,6 +47,15 @@ function aNumero(valor) {
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
+/* Precio sin IVA del ERP (`netPrice`). Solo vale junto al precio con IVA y
+   nunca por encima de el: si falta o no cierra, null y se muestra el con IVA
+   (respaldo honesto). La tienda no calcula IVA. */
+function netoDe(neto, precio) {
+  if (precio === null) return null
+  const n = aNumero(neto)
+  return n !== null && n <= precio ? n : null
+}
+
 export function normalizarCatalogo(crudo, { demo = false } = {}) {
   const categorias = new Map((crudo.categories || []).map((c) => [c.slug, c]))
   const marcas = new Map((crudo.brands || []).map((m) => [m.slug, m]))
@@ -75,6 +84,7 @@ export function normalizarCatalogo(crudo, { demo = false } = {}) {
       const marca = generico ? null : marcaErp
       const textoCategoria = rutaCategoria(p.category)
       const disponibilidad = DISPONIBILIDAD[p.availability] ? p.availability : 'a_pedido'
+      const precio = aNumero(p.price)
       return {
         id: String(p.id),
         slug: p.slug || slugify(`${p.name}-${p.sku || p.id}`),
@@ -87,7 +97,9 @@ export function normalizarCatalogo(crudo, { demo = false } = {}) {
         rutaCategoria: rutaDeCategoria(indice, p.category),
         linea: lineaDe(textoCategoria, p.name),
         imagen: p.imageUrl || null,
-        precio: aNumero(p.price),
+        /* `precio` = final con IVA (lo que se cobra); `precioSinIva` = el que se muestra */
+        precio,
+        precioSinIva: netoDe(p.netPrice, precio),
         disponibilidad,
         destacado: Boolean(p.featured),
         specs: extraerSpecs(p),
@@ -116,6 +128,7 @@ export function normalizarCatalogo(crudo, { demo = false } = {}) {
       }))
       const primero = porIdProducto.get(componentes[0]?.id)
       const disponibilidad = DISPONIBILIDAD[c.availability] ? c.availability : 'a_pedido'
+      const precio = aNumero(c.price)
       return {
         id: String(c.id),
         slug: c.slug || slugify(`${c.name}-${c.id}`),
@@ -128,7 +141,8 @@ export function normalizarCatalogo(crudo, { demo = false } = {}) {
         linea: lineaDe(textoCategoria, c.name),
         imagen: c.imageUrl || primero?.imagen || null,
         imagenes: Array.isArray(c.images) ? c.images : [],
-        precio: aNumero(c.price),
+        precio,
+        precioSinIva: netoDe(c.netPrice, precio),
         disponibilidad,
         destacado: false,
         specs: extraerSpecs({ name: c.name, description: c.description || '' }),
@@ -178,21 +192,35 @@ function conProductos(datos, productos) {
 
 /**
  * Precios de la lista del cliente con sesion, superpuestos por id al catalogo
- * publico (lista Gremio). `canal` = { etiqueta, precios: Map(id -> numero) }
- * o null. Un producto sin precio en su lista queda en «Consultar precio»:
- * nunca se le muestra el precio Gremio como si fuera el suyo.
+ * publico (lista Gremio). `canal` = { etiqueta, precios: Map(id -> { precio,
+ * precioSinIva }) } o null. Un producto sin precio en su lista queda en
+ * «Consultar precio»: nunca se le muestra el precio Gremio como si fuera el
+ * suyo (tampoco el sin IVA del Gremio).
  */
 export function conPreciosDeCanal(datos, canal) {
   if (!canal) return datos
   return conProductos(
     datos,
-    datos.productos.map((p) => ({ ...p, precio: canal.precios.get(p.id) ?? null, canal: canal.etiqueta }))
+    datos.productos.map((p) => {
+      const x = canal.precios.get(p.id)
+      return { ...p, precio: x?.precio ?? null, precioSinIva: x?.precioSinIva ?? null, canal: canal.etiqueta }
+    })
   )
 }
 
-/** Precios del ERP (`[{ id, price }]`, string decimal) a Map(id -> numero). */
+/**
+ * Precios del ERP (`[{ id, price, netPrice }]`, strings decimales; `price` con
+ * IVA, `netPrice` sin IVA o ausente) a Map(id -> { precio, precioSinIva }).
+ */
 export function mapaDePrecios(lista) {
-  return new Map((lista || []).map((x) => [String(x.id), aNumero(x.price)]).filter(([, precio]) => precio !== null))
+  return new Map(
+    (lista || [])
+      .map((x) => {
+        const precio = aNumero(x.price)
+        return [String(x.id), { precio, precioSinIva: netoDe(x.netPrice, precio) }]
+      })
+      .filter(([, v]) => v.precio !== null)
+  )
 }
 
 /* Hasta cuantas unidades el tramo es «ultimas» (STOREFRONT_LOW_STOCK del ERP) */

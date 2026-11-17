@@ -98,7 +98,7 @@ function ComponentesCombo({ combo, porId }) {
   return (
     <div className="cr-solido p-5 sm:p-7">
       <h2 className="cr-eyebrow mb-1">Qué trae este combo</h2>
-      <p className="mb-3 text-xs text-black/60 dark:text-white/60">El precio es el de todos estos productos juntos, con IVA. Tocá cada uno para ver su ficha.</p>
+      <p className="mb-3 text-xs text-black/60 dark:text-white/60">El precio es el de todos estos productos juntos. Tocá cada uno para ver su ficha.</p>
       <ul className="divide-y divide-black/[0.07] text-sm dark:divide-white/10">
         {combo.componentes.map((c) => {
           const producto = porId.get(c.id)
@@ -258,11 +258,13 @@ export default function Producto() {
             {producto.marca?.identidad?.oficial && <SelloHikvision className="mt-4" />}
 
             <div className="mt-5 border-t cr-hairline pt-5">
-              <Precio valor={producto.precio} canal={producto.canal} grande />
+              <Precio producto={producto} tamano="lg" />
               <p className="cr-muted mt-1 text-xs">
-                {producto.precio !== null
-                  ? 'Precio final con IVA incluido. Envío no incluido: se cotiza al confirmar el pedido.'
-                  : 'Precio según cantidad y proyecto: un asesor te lo cotiza.'}
+                {producto.precio === null
+                  ? 'Precio según cantidad y proyecto: un asesor te lo cotiza.'
+                  : producto.precioSinIva != null
+                    ? 'Precio sin IVA: el carrito te muestra el IVA y el total antes de mandar el pedido. Envío no incluido: se cotiza al confirmar.'
+                    : 'Precio final con IVA incluido. Envío no incluido: se cotiza al confirmar el pedido.'}
               </p>
               {/* Con sesion la cantidad ya esta a la vista: «Última en stock», «2 en stock» */}
               {producto.disponibilidad === 'ultimas' && !producto.stock && (
@@ -334,7 +336,7 @@ export default function Producto() {
       {/* Barra fija de compra en telefono: la accion siempre al alcance del pulgar */}
       <div className="cr-panel-solido pb-safe fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t cr-hairline px-4 pt-3 sm:hidden">
         <div className="min-w-0 shrink-0">
-          <Precio valor={producto.precio} canal={producto.canal} className="!text-base" />
+          <Precio producto={producto} tamano="sm" />
         </div>
         <div className="flex flex-1 gap-2">
           {comprable ? (

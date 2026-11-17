@@ -5,7 +5,7 @@ const ORIGEN = 'https://www.controlred.com.ar'
 /* El mismo valor que index.html; las paginas de cuenta lo cambian a noindex */
 const ROBOTS_BASE = 'index, follow, max-image-preview:large, max-snippet:-1'
 const DESCRIPCION_BASE =
-  'Tienda de seguridad electrónica en CABA: cámaras IP, DVR/NVR Hikvision, control de acceso, alarmas y automatización. Precios con IVA, envíos a todo el país y retiro en Flores.'
+  'Tienda de seguridad electrónica en CABA: cámaras IP, DVR/NVR Hikvision, control de acceso, alarmas y automatización. Envíos a todo el país y retiro en Flores.'
 
 function fijarMeta(nombre, valor, atributo = 'name') {
   let nodo = document.head.querySelector(`meta[${atributo}="${nombre}"]`)

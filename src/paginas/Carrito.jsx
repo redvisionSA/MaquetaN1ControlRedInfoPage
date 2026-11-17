@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTienda } from '../tienda/TiendaContext.jsx'
 import LineaCarrito from '../tienda/LineaCarrito.jsx'
-import { Campo, Migas, Placa, SimboloIso } from '../tienda/piezas.jsx'
+import { Campo, Migas, Placa, ResumenIva, SimboloIso } from '../tienda/piezas.jsx'
 import { formatoPrecio } from '../tienda/formato.js'
 import { enlaceWhatsapp, mensajePedido } from '../tienda/whatsapp.js'
 import { IconoCheck, IconoEscudo, IconoWhatsapp } from '../tienda/Iconos.jsx'
@@ -323,22 +323,22 @@ export default function Carrito() {
           <div className="lg:sticky lg:top-[110px] lg:self-start">
             <div className="cr-solido p-5 sm:p-6">
               <h2 className="text-onglass font-display text-lg font-bold">Resumen</h2>
-              <dl className="mt-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <dt className="cr-muted">Productos ({resumen.unidades})</dt>
-                  <dd className="num font-semibold text-black dark:text-white">{formatoPrecio(resumen.subtotal) || '$ 0'}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="cr-muted">Envío</dt>
-                  <dd className="text-black dark:text-white">{entrega === 'retiro' ? 'Sin cargo (retiro)' : 'A cotizar'}</dd>
-                </div>
-              </dl>
-              <div className="mt-4 flex items-baseline justify-between border-t cr-hairline pt-4">
-                <span className="font-semibold text-black dark:text-white">Total estimado</span>
-                <span className="num font-display text-3xl font-bold text-black dark:text-white">{formatoPrecio(resumen.subtotal) || '$ 0'}</span>
+              <div className="mt-4">
+                <ResumenIva
+                  resumen={resumen}
+                  tituloTotal="Total con IVA estimado"
+                  filas={
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="cr-muted">Envío</dt>
+                      <dd className="text-black dark:text-white">{entrega === 'retiro' ? 'Sin cargo (retiro)' : 'A cotizar'}</dd>
+                    </div>
+                  }
+                />
               </div>
               <p className="cr-muted mt-1 text-xs">
-                {canal ? `Precios de tu lista ${canal.etiqueta}. ` : ''}IVA incluido.{resumen.hayAConfirmar ? ' Incluye productos con precio a confirmar.' : ''}
+                {canal ? `Precios de tu lista ${canal.etiqueta}. ` : ''}
+                {resumen.iva !== null ? 'El total ya suma el IVA.' : 'IVA incluido.'}
+                {resumen.hayAConfirmar ? ' Incluye productos con precio a confirmar.' : ''}
               </p>
 
               {errorEnvio && (

@@ -319,6 +319,37 @@
     border-right-color: var(--cr-freno);
   }
 
+  /* --- Precio sin IVA «+ IVA» y total (regla de precios, 17/11) --------
+     La etiqueta va pegada al numero como la unidad en un display de
+     tablero: mini placa mono con la tinta de la placa, nunca texto gris
+     suelto. El total con IVA (lo que se paga) se lee como un visor con su
+     rotulo mono arriba de una regla de 1,5 px. */
+  .cr-iva {
+    @apply inline-flex shrink-0 items-center whitespace-nowrap font-mono font-bold uppercase leading-none;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    padding: 3px 4px 2px;
+    border-radius: 3px;
+    border: 1px solid var(--border-strong);
+    background: var(--cr-placa);
+    color: var(--cr-placa-text);
+    position: relative;
+    top: -0.1em;
+  }
+  .cr-iva--grande {
+    font-size: 13px;
+    padding: 5px 6px 4px;
+    top: -0.35em;
+  }
+  .cr-total {
+    @apply flex flex-wrap items-baseline justify-between gap-x-3 pt-3;
+    border-top: 1.5px solid var(--text);
+  }
+  .cr-total__cab {
+    @apply font-mono text-[11px] font-semibold uppercase tracking-[0.08em];
+    color: var(--text);
+  }
+
   /* Chip blanco para logos de marca: conservan sus colores en claro y oscuro */
   .cr-chip-marca {
     @apply inline-flex items-center justify-center rounded-2xl;

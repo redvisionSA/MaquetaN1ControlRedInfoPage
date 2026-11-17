@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTienda } from './TiendaContext.jsx'
-import { formatoPrecio } from './formato.js'
 import { COMPLEMENTOS } from './lineas.jsx'
 import LineaCarrito from './LineaCarrito.jsx'
-import { ImagenProducto, sePuedeComprar } from './piezas.jsx'
+import { ImagenProducto, Precio, ResumenIva, sePuedeComprar } from './piezas.jsx'
 import { IconoCarrito, IconoCerrar, IconoMas } from './Iconos.jsx'
 
 /**
  * Cajon lateral del carrito.
  *
  * Confirma cada agregado sin sacar al visitante de lo que estaba mirando,
- * muestra el subtotal en todo momento (sin sorpresas) y sugiere lo que la
+ * muestra subtotal sin IVA, IVA y total con IVA en todo momento (sin
+ * sorpresas: los precios de la tienda se ven sin IVA) y sugiere lo que la
  * instalacion necesita al lado: fuente, red, accesorios.
  */
 export default function CarritoDrawer() {
@@ -106,7 +106,7 @@ export default function CarritoDrawer() {
                         <ImagenProducto producto={p} tamano="xs" className="h-12 w-12 shrink-0 rounded-xl" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-xs font-semibold text-black dark:text-white">{p.nombre}</p>
-                          <p className="num text-xs font-bold text-black/75 dark:text-white/80">{formatoPrecio(p.precio)}</p>
+                          <Precio producto={p} tamano="sm" />
                         </div>
                         <button
                           type="button"
@@ -125,14 +125,12 @@ export default function CarritoDrawer() {
           )}
         </div>
 
+        {/* div y no <footer>: v1.css pinta todo `footer` como el pie del sitio (azul oscuro) */}
         {lineas.length > 0 && (
-          <footer className="pb-safe border-t cr-hairline px-5 pt-4">
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm font-semibold text-black dark:text-white">Subtotal</span>
-              <span className="num font-display text-2xl font-bold text-black dark:text-white">{formatoPrecio(resumen.subtotal) || '$ 0'}</span>
-            </div>
+          <div className="pb-safe border-t cr-hairline px-5 pt-4">
+            <ResumenIva resumen={resumen} compacto />
             <p className="cr-muted mb-3 mt-1 text-xs">
-              IVA incluido. {resumen.hayAConfirmar ? 'Hay productos con precio a confirmar. ' : ''}El envío se cotiza al confirmar.
+              {resumen.hayAConfirmar ? 'Hay productos con precio a confirmar. ' : ''}El envío se cotiza al confirmar.
             </p>
             <Link to="/carrito" className="cr-btn-primary w-full">
               Finalizar pedido
@@ -140,7 +138,7 @@ export default function CarritoDrawer() {
             <button type="button" onClick={cerrar} className="cr-link mx-auto mt-2 block py-2 text-xs font-semibold uppercase tracking-wide">
               Seguir comprando
             </button>
-          </footer>
+          </div>
         )}
       </aside>
     </div>

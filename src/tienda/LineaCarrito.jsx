@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTienda } from './TiendaContext.jsx'
-import { formatoPrecio } from './formato.js'
-import { ImagenProducto } from './piezas.jsx'
+import { formatoPrecio, precioVisible } from './formato.js'
+import { ImagenProducto, Importe } from './piezas.jsx'
 import { IconoBasura, IconoMas, IconoMenos } from './Iconos.jsx'
 
 /** Selector de cantidad: botones de 44 px, input a 16 px (sin zoom en iOS). */
@@ -44,7 +44,7 @@ export function Cantidad({ valor, onCambiar, etiqueta = 'Cantidad', min = 1 }) {
 
 export default function LineaCarrito({ linea, onNavegar, compacta = false }) {
   const { cambiarCantidad, quitar } = useTienda()
-  const { producto, cantidad, subtotal } = linea
+  const { producto, cantidad, subtotal, subtotalSinIva } = linea
 
   if (!producto) {
     return (
@@ -72,14 +72,18 @@ export default function LineaCarrito({ linea, onNavegar, compacta = false }) {
         </Link>
         <p className="cr-muted mt-0.5 text-xs">
           {producto.sku && <span className="mr-2">Cód. {producto.sku}</span>}
-          {producto.precio !== null ? `${formatoPrecio(producto.precio)} c/u` : 'Precio a confirmar'}
+          {producto.precio === null
+            ? 'Precio a confirmar'
+            : `${formatoPrecio(precioVisible(producto))} ${producto.precioSinIva != null ? '+ IVA' : 'IVA incluido'} c/u`}
         </p>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <Cantidad valor={cantidad} onCambiar={(n) => cambiarCantidad(producto.id, n)} etiqueta={`Cantidad de ${producto.nombre}`} />
           <div className="flex items-center gap-1">
-            <span className="num font-display text-sm font-bold text-black dark:text-white">
-              {subtotal !== null ? formatoPrecio(subtotal) : 'A confirmar'}
-            </span>
+            {subtotal !== null ? (
+              <Importe valor={subtotalSinIva ?? subtotal} masIva={subtotalSinIva !== null} tamano="sm" className="justify-end" />
+            ) : (
+              <span className="font-display text-sm font-bold text-black dark:text-white">A confirmar</span>
+            )}
             <button
               type="button"
               onClick={() => quitar(producto.id)}

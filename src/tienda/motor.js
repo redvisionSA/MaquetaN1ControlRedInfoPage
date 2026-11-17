@@ -1,4 +1,4 @@
-import { normalizarTexto } from './formato.js'
+import { normalizarTexto, precioVisible } from './formato.js'
 import { etiquetaMp } from './specs.js'
 
 /**
@@ -231,10 +231,13 @@ function pasaFacetas(p, facetas, excepto) {
   return true
 }
 
+/* Filtro y orden por precio con el mismo numero que se ve (sin IVA; con IVA
+   solo si el ERP no lo manda): `precioVisible` */
 function pasaPrecio(p, min, max) {
   if (min === null && max === null) return true
-  if (p.precio === null) return false
-  return (min === null || p.precio >= min) && (max === null || p.precio <= max)
+  const v = precioVisible(p)
+  if (v === null) return false
+  return (min === null || v >= min) && (max === null || v <= max)
 }
 
 const pasaStock = (p, stock) => !stock || p.disponibilidad === 'disponible' || p.disponibilidad === 'ultimas'
@@ -271,8 +274,8 @@ export function calcularFacetas(productos, sel, ctx) {
 /** Rango de precios disponible y un histograma de 24 barras. */
 export function rangoPrecios(productos, sel) {
   const precios = productos
-    .filter((p) => p.precio !== null && pasaFacetas(p, sel.facetas, null) && pasaStock(p, sel.stock))
-    .map((p) => p.precio)
+    .filter((p) => precioVisible(p) !== null && pasaFacetas(p, sel.facetas, null) && pasaStock(p, sel.stock))
+    .map((p) => precioVisible(p))
   if (!precios.length) return null
   const min = Math.floor(Math.min(...precios))
   const max = Math.ceil(Math.max(...precios))
@@ -311,7 +314,11 @@ const PESO_DISP = { disponible: 0, ultimas: 1, a_pedido: 2, sin_stock: 3 }
 
 export function ordenarLista(items, orden) {
   const lista = [...items]
-  const conPrecio = (a, b, f) => (a.precio === null) - (b.precio === null) || (a.precio !== null && b.precio !== null ? f(a.precio, b.precio) : 0)
+  const conPrecio = (a, b, f) => {
+    const x = precioVisible(a)
+    const y = precioVisible(b)
+    return (x === null) - (y === null) || (x !== null && y !== null ? f(x, y) : 0)
+  }
   switch (orden) {
     case 'precio-asc':
       return lista.sort((a, b) => conPrecio(a, b, (x, y) => x - y))
