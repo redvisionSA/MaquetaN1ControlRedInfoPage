@@ -51,11 +51,17 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
 - **Marcas**: Hikvision `oficial: true` (sello «Hik Tech Ambassador oficial» en su ficha, `SelloHikvision.jsx`);
   Dahua es una marca más. Tecnologías nuevas en `specs.js`: TandemVu, DarkFighter, **Turbo HD**
   (los compatibles comparan IP contra analógico HD, Turbo HD o HDCVI).
-- **Logos (17/11):** un solo archivo por marca en `public/marcas/` (Dahua: SVG transparente). Hikvision
-  sale siempre de `marcas/hikvision.png` (1024 px): a color en claro, en blanco con `.logo-blanco` en oscuro
-  y siempre en blanco sobre la barra azul de confianza. `LogoMarca` mide con `medidaLogo` (`marcas.js`:
-  peso visual parejo por `proporcion` y `tinta`), alt = nombre oficial; sin pastilla, en oscuro va sobre
-  placa blanca (`.cr-logo-marca`). `og-image.jpg` (1200x630) en la raíz de `public/`: la URL vieja
+- **Logos (17/11):** marcas en `public/marcas/` como SVG oficiales sanitizados (sin scripts, metadatos,
+  ids ni fondo; viewBox al dibujo con 3 % de aire parejo): Hikvision (`hikvision.svg` y
+  `hikvision-blanco.svg`, esta siempre sobre la barra azul y en oscuro), Dahua, Imou (vector negro con el
+  naranja #F08C00 del logo oficial), TP-Link y Tenda. **EZVIZ sin logo** (`logo: null`, va el nombre): el
+  vigente es otro (abanico monocromo + EZVIZ en mayúsculas) y solo tenemos el viejo. `LogoMarca` mide con
+  `medidaLogo` (`marcas.js`, peso visual parejo por `proporcion`), alt = nombre oficial; sin pastilla, en
+  oscuro va sobre placa blanca (`.cr-logo-marca`). Logo propio = «LOGO CONTROL RED NUEVO» (engranaje de
+  línea): `img/controlred-logo.png` y `-oscuro.png` (993x162, fila del logotipo sin la bajada, fondo
+  blanco separado por tinta, oscuro con los azul y gris de la versión anterior). El emblema 3D del hero
+  sigue con el engranaje macizo anterior. Favicon y `apple-touch-icon.png` = la O de engranaje recortada
+  del logo nuevo sobre placa blanca. `og-image.jpg` (1200x630) en la raíz de `public/`: la URL vieja
   `/assets/og-image.jpg` nunca existió (devolvía la página).
 - **Rojo** `cr-red` (#E2231A) solo para lo que frena o apura (sin stock, últimas unidades, errores);
   el azul `cr-blue` (#344AB2) es el de los botones.

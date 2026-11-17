@@ -141,8 +141,8 @@ export default function Encabezado() {
         <div className="container">
           <span>Distribuidor oficial de tecnología</span>
           <div className="trust-divider" />
-          {/* La barra es azul en los dos temas: Hikvision va siempre en blanco (negativo del archivo oficial) */}
-          <img className="logo-blanco" src="/marcas/hikvision.png" alt="Hikvision" width="157" height="21" />
+          {/* La barra es azul en los dos temas: Hikvision va siempre en su version blanca */}
+          <img src="/marcas/hikvision-blanco.svg" alt="Hikvision" width="157" height="21" />
           <div className="trust-divider" />
           <span>Hik Tech Ambassador oficial</span>
         </div>
@@ -152,8 +152,8 @@ export default function Encabezado() {
         <div className="cr-barra">
           <div className="container nav-inner cr-nav-inner">
             <Link to="/" className="brand shrink-0" aria-label="Control Red - Inicio">
-              <img className="tsw-light" src="/img/controlred-claro.webp" alt="ControlRed — seguridad electrónica y tecnología" width="220" height="34" fetchpriority="high" />
-              <img className="tsw-dark" src="/img/controlred-oscuro.webp" alt="ControlRed — seguridad electrónica y tecnología" width="220" height="34" />
+              <img className="tsw-light" src="/img/controlred-logo.png" alt="ControlRed — seguridad electrónica y tecnología" width="208" height="34" fetchpriority="high" />
+              <img className="tsw-dark" src="/img/controlred-logo-oscuro.png" alt="ControlRed — seguridad electrónica y tecnología" width="208" height="34" />
             </Link>
 
             <Buscador atajo className="mx-2 hidden min-w-0 flex-1 lg:block" />

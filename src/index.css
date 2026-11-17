@@ -123,12 +123,6 @@
     padding: var(--logo-aire, 3px) calc(var(--logo-aire, 3px) * 2);
   }
 
-  /* Logo blanco (negativo) a partir del archivo a color: solo para logotipos
-     planos que la marca usa en blanco sobre fondos de color (Hikvision). */
-  .logo-blanco {
-    filter: brightness(0) invert(1);
-  }
-
   .cr-field {
     @apply w-full rounded-2xl px-4 py-3 outline-none transition-colors duration-200;
     min-height: 48px;
