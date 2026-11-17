@@ -33,8 +33,7 @@ function ProductoCard({ producto, className = '', vista = 'grilla' }) {
     <button
       type="button"
       onClick={onAgregar}
-      className={`flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-3 font-display text-xs font-semibold uppercase tracking-wide transition-colors duration-200 active:scale-[0.98]
-                  ${recien || enCarrito ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-cr-blue text-white hover:bg-cr-blue-press'}`}
+      className={`cr-btn-primary min-h-[44px] w-full px-3 text-sm ${recien || enCarrito ? 'bg-black text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-white' : ''}`}
     >
       {recien ? <IconoCheck className="h-4 w-4" /> : <IconoCarrito className="h-4 w-4" />}
       {recien ? 'Agregado' : enCarrito ? 'Sumar otro' : 'Agregar'}
@@ -44,7 +43,7 @@ function ProductoCard({ producto, className = '', vista = 'grilla' }) {
       href={enlaceWhatsapp(mensajeProducto(producto))}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-black/15 px-3 font-display text-xs font-semibold uppercase tracking-wide text-black hover:border-cr-blue hover:text-cr-blue dark:border-white/20 dark:text-white"
+      className="cr-btn-glass min-h-[44px] w-full px-3 text-sm"
     >
       <IconoWhatsapp className="h-4 w-4" />
       Consultar ingreso

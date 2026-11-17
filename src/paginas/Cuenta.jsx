@@ -90,8 +90,8 @@ function CampoContrasena({ id, label, error, ayuda, autoComplete, value, onChang
 
 function Enviar({ enviando, children, textoEnviando }) {
   return (
-    <button type="submit" disabled={enviando} className="cr-btn-primary mt-2 w-full disabled:cursor-not-allowed disabled:opacity-60">
-      {enviando ? textoEnviando : children}
+    <button type="submit" disabled={enviando} aria-busy={enviando || undefined} className="cr-btn-primary mt-2 w-full">
+      {enviando ? <><span className="cr-led" aria-hidden="true" />{textoEnviando}</> : children}
     </button>
   )
 }

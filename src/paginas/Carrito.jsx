@@ -350,8 +350,8 @@ export default function Carrito() {
                 </div>
               )}
 
-              <button type="submit" disabled={enviando || validas.length === 0} className="cr-btn-primary mt-5 w-full disabled:cursor-not-allowed disabled:opacity-60">
-                {enviando ? 'Enviando pedido…' : 'Confirmar pedido'}
+              <button type="submit" disabled={enviando || validas.length === 0} className="cr-btn-primary mt-5 w-full" aria-busy={enviando || undefined}>
+                {enviando ? <><span className="cr-led" aria-hidden="true" />Mandando pedido…</> : 'Confirmar pedido'}
               </button>
               <p className="cr-muted mt-3 flex items-start gap-2 text-xs leading-relaxed">
                 <IconoEscudo className="mt-0.5 h-4 w-4 shrink-0" />

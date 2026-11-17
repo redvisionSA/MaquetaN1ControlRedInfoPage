@@ -20,6 +20,18 @@
   --border-strong:#CBD0E8;
   --hik-red:#E2231A;
 
+  /* ---- Lenguaje «tablero de instalador» (Aspecto 6, 17/11) ----
+     Azul = actuar; rojo = frenar (sin stock, errores, vaciar). Celeste de placa = información. */
+  --cr-freno:#E2231A;          /* relleno de lo que frena (blanco encima 4,7:1) */
+  --cr-freno-text:#C81D14;     /* rojo como texto sobre blanco (5,8:1) */
+  --cr-placa:#E8EBFA;          /* panel de símbolo / encabezado de placa */
+  --cr-placa-text:#141B45;     /* 13,9:1 sobre la placa */
+  --cr-btn:#344AB2;            /* tecla principal (blanco 7,6:1) */
+  --cr-btn-hover:#25357F;
+  --cr-tecla-borde:rgba(10,14,40,.30);  /* borde de apoyo de la tecla */
+  --cr-ticket:#FFFFFF;
+  --cr-corte:12px;             /* esquina troquelada de la placa */
+
   --radius-s:12px;
   --radius-m:20px;
   --radius-l:30px;
@@ -61,6 +73,14 @@
   --border:#262C55;
   --border-strong:#333B6E;
   --blue-deep:#0B0E1F;
+
+  --cr-freno-text:#FF6B63;     /* 6,0:1 sobre #161B3B */
+  --cr-placa:#1D2350;
+  --cr-placa-text:#C9D2FF;     /* 10,0:1 */
+  --cr-btn:#4A61CF;            /* blanco 5,4:1 */
+  --cr-btn-hover:#5B72E0;
+  --cr-tecla-borde:rgba(0,0,0,.45);
+  --cr-ticket:#232A5C;
 
   --glass-bg: rgba(22,27,59,.40);
   --glass-bg-strong: rgba(22,27,59,.60);

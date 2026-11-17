@@ -61,40 +61,95 @@
   }
 
   /* --- Controles ------------------------------------------------------ */
+  /* Teclas de panel (Aspecto 6, «tablero de instalador»): rectangulares, con
+     borde de apoyo abajo como las teclas de un panel de alarma; al apretar
+     bajan 2 px. Sin resplandor del color ni achique. Deshabilitada = cinta
+     rayada de «fuera de servicio» (no solo opacidad). Carga = LED que titila
+     (`.cr-led` adentro). Rojo (`.cr-btn-freno`) solo para lo que frena. */
+  .cr-btn-primary,
+  .cr-btn-glass,
+  .cr-btn-freno {
+    @apply relative inline-flex cursor-pointer select-none items-center justify-center gap-2 px-5 font-display text-[15px] font-bold;
+    min-height: 46px;
+    padding-bottom: 3px;
+    border-radius: 4px;
+    transition:
+      background-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 150ms,
+      color 150ms,
+      box-shadow 80ms,
+      transform 80ms;
+  }
   .cr-btn-primary {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-pill px-6 py-3 font-display text-sm font-bold text-white
-           transition-all duration-200 ease-apple active:scale-[0.97];
-    min-height: 44px;
-    background: var(--accent);
-    box-shadow:
-      0 6px 18px -6px color-mix(in srgb, var(--accent) 70%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: #fff;
+    background: var(--cr-btn);
+    box-shadow: inset 0 -3px 0 var(--cr-tecla-borde);
   }
   .cr-btn-primary:hover {
-    background: var(--accent-strong);
+    background: var(--cr-btn-hover);
   }
-  [data-theme='dark'] .cr-btn-primary {
-    background: #4a61cf;
-  }
-  [data-theme='dark'] .cr-btn-primary:hover {
-    background: #5b72e0;
-  }
-  .cr-btn-primary:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-
   .cr-btn-glass {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-pill px-6 py-3 font-display text-sm font-bold
-           transition-all duration-200 ease-apple active:scale-[0.97];
-    min-height: 44px;
     color: var(--text);
     background: var(--surface-strong);
     border: 1.5px solid var(--border-strong);
+    box-shadow: inset 0 -3px 0 var(--border);
   }
   .cr-btn-glass:hover {
     border-color: var(--accent);
     color: var(--accent);
+  }
+  .cr-btn-freno {
+    color: #fff;
+    background: var(--cr-freno);
+    box-shadow: inset 0 -3px 0 var(--cr-tecla-borde);
+  }
+  .cr-btn-freno:hover {
+    background: #b81b13;
+  }
+  .cr-btn-primary:active,
+  .cr-btn-glass:active,
+  .cr-btn-freno:active {
+    transform: translateY(2px);
+    box-shadow: inset 0 -1px 0 var(--cr-tecla-borde);
+  }
+  .cr-btn-primary:focus-visible,
+  .cr-btn-glass:focus-visible,
+  .cr-btn-freno:focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 3px;
+  }
+  .cr-btn-primary:disabled,
+  .cr-btn-glass:disabled,
+  .cr-btn-freno:disabled {
+    cursor: not-allowed;
+    color: var(--text-muted);
+    border: 1.5px solid var(--border-strong);
+    box-shadow: none;
+    transform: none;
+    background: repeating-linear-gradient(135deg, var(--surface) 0 6px, var(--border) 6px 8px);
+  }
+  .cr-btn-primary[aria-busy='true'] {
+    cursor: progress;
+  }
+  /* LED de la tecla mientras se manda algo */
+  .cr-led {
+    @apply inline-block h-2 w-2 shrink-0 rounded-[1px] bg-current;
+    animation: cr-led 0.9s steps(1, end) infinite;
+  }
+  @keyframes cr-led {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cr-btn-primary:active,
+    .cr-btn-glass:active,
+    .cr-btn-freno:active {
+      transform: none;
+    }
+    .cr-led {
+      animation: none;
+    }
   }
 
   .cr-link {
