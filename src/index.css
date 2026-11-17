@@ -211,6 +211,60 @@
     color: #fff;
   }
 
+  /* --- Ticket (confirmación flotante) --------------------------------
+     Papel con el borde de abajo dentado (mask); la sombra va en el
+     contenedor con drop-shadow porque la máscara recorta la box-shadow. */
+  .cr-ticket-lugar {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 70;
+    width: min(340px, calc(100vw - 32px));
+  }
+  .cr-ticket-sombra {
+    filter: drop-shadow(0 10px 18px rgba(20, 27, 69, 0.22));
+  }
+  .cr-ticket {
+    background: var(--cr-ticket);
+    color: var(--text);
+    padding: 12px 14px 20px;
+    -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 12px 100%;
+    mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 12px 100%;
+    animation: cr-ticket-sale 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .cr-ticket__cab {
+    @apply mb-2 flex justify-between gap-3 pb-2 font-mono text-[11px] font-semibold uppercase tracking-[0.06em];
+    color: var(--text-muted);
+    border-bottom: 1.5px dashed var(--border-strong);
+  }
+  .cr-ticket__lin {
+    @apply grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2.5;
+  }
+  .cr-ticket__tit {
+    @apply font-display text-sm font-bold leading-snug;
+  }
+  .cr-ticket__cod {
+    @apply mt-0.5 font-mono text-xs;
+    color: var(--text-muted);
+  }
+  .cr-ticket__acc {
+    @apply mt-2.5 flex items-center justify-between gap-3;
+  }
+  .cr-ticket__acc button {
+    min-height: 40px;
+  }
+  @keyframes cr-ticket-sale {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cr-ticket {
+      animation: none;
+    }
+  }
+
   /* --- Señal de dos paneles (disponibilidad, combos) ------------------ */
   .cr-senal {
     @apply inline-flex w-max max-w-full items-stretch overflow-hidden font-display text-xs font-semibold leading-tight;

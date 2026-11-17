@@ -7,6 +7,7 @@ import { TiendaProvider } from './tienda/TiendaContext.jsx'
 import { CuentaProvider } from './cuenta/CuentaContext.jsx'
 import CarritoDrawer from './tienda/CarritoDrawer.jsx'
 import BotonWhatsapp from './tienda/BotonWhatsapp.jsx'
+import Ticket from './tienda/Ticket.jsx'
 import { AvisoDemo } from './tienda/piezas.jsx'
 import { irAlAncla } from './componentes/anclas.js'
 
@@ -90,6 +91,7 @@ export default function App() {
           <Pie />
 
           <CarritoDrawer />
+          <Ticket />
           <BotonWhatsapp />
           <AvisoDemo />
         </TiendaProvider>

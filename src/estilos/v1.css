@@ -748,7 +748,7 @@ header.nav.menu-open .nav-links-mobile{
 .wa-float .wa-ping{
   position:absolute; inset:0; border-radius:50%;
   border:2px solid #25D366; opacity:0;
-  animation:wa-pulse 2.6s var(--ease) infinite;
+  animation:wa-pulse 2.6s var(--ease) 3; /* Aspecto 6: avisa tres veces y se queda quieto */
 }
 @keyframes wa-pulse{
   0%{ transform:scale(1); opacity:.55; }
