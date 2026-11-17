@@ -32,6 +32,24 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
   (Pages, D1 y Resend gratis en este volumen).
 - Commit, push y publicación solo con el OK del usuario. La base `rvcr_dev` del ERP no se toca.
 
+## Lenguaje visual de avisos: «tablero de instalador» (Aspecto 6, 17/11)
+Lo que la tienda dice se lee como la señalética y las teclas que el instalador ve en obra. **Es propio de
+Control Red: la tienda de REDVISION habla otro idioma («OSD / visor») y el ERP otro («planilla de
+trabajo»). Los dos lenguajes de las tiendas ya no se comparten: al portar código de RV, además de pasar
+los textos a vos, traducir la pieza** (Disponibilidad → `cr-senal`, Aviso → `Placa`, botón → tecla).
+- **Señal de dos paneles** (`cr-senal`, `Disponibilidad`, `SimboloIso` en `piezas.jsx`): panel de símbolo
+  ISO 3864 + texto. Cuadrado = disponible, triángulo = últimas unidades, cuadrado con reloj = a pedido,
+  círculo tachado = sin stock (rojo lleno). También el rótulo de los combos.
+- **Teclas** (`.cr-btn-primary`, `.cr-btn-glass`, `.cr-btn-freno`): rectángulo de 4 px con borde de apoyo
+  abajo, bajan 2 px al apretar; deshabilitada = cinta rayada; mandando = LED (`.cr-led`). Nunca píldora,
+  resplandor ni `scale`. Rojo (`freno`) solo para lo que frena.
+- **Placa** (`Placa tono=info|listo|atencion|freno`, `AvisoError`): borde 1,5 px, esquina troquelada,
+  encabezado mono con la palabra de señal; FRENO = `role="alert"`.
+- **Ticket** (`tienda/Ticket.jsx`): confirmación de agregado, papel dentado, abajo a la izquierda, 4 s.
+- **Superficies planas** (`.cr-solido`: radio 4 px, borde 1 px, sin sombra difusa ni elevación).
+- Tokens en `estilos/v1.css`: `--cr-freno`, `--cr-freno-text`, `--cr-placa`, `--cr-btn`, `--cr-ticket`… con
+  su par oscuro. La zona IARED (`.iared-zona`) **no** usa estas piezas: es marca invitada con su manual.
+
 ## Mapa del código
 | Qué | Dónde |
 |---|---|
