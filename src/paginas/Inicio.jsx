@@ -5,7 +5,9 @@ import { sePuedeComprar } from '../tienda/piezas.jsx'
 import CarruselProductos from '../tienda/CarruselProductos.jsx'
 import CarruselMarcas from '../tienda/CarruselMarcas.jsx'
 import { usePopulares } from '../tienda/popularidad.js'
-import { LINEAS } from '../tienda/lineas.jsx'
+import { lineaDe, lineaPorId } from '../tienda/lineas.jsx'
+import { enlaceCategoria } from '../tienda/categorias.js'
+import { EN_LA_BARRA, ICONO } from '../datos/categorias.js'
 import { IconoCamion, IconoEstrella, IconoLocal, IconoTecnico, IconoWhatsapp } from '../tienda/Iconos.jsx'
 import EMPRESA from '../datos/empresa.js'
 import { enlaceConsulta } from '../tienda/whatsapp.js'
@@ -19,7 +21,7 @@ import tecnologiasHtml from '../vitrina/tecnologias.html?raw'
  *
  * Orden pensado para la decision de compra:
  *   1. Hero de la v1 (emblema 3D) con «Ver productos».
- *   2. Departamentos: el catalogo a un toque.
+ *   2. Categorias del ERP (las primeras): el catalogo a un toque.
  *   3. Un solo carrusel: lo mas buscado y cotizado (o destacados).
  *   4. Tecnologias de la v1 (showroom Hikvision), cada una con su enlace a la tienda.
  *   5. Marcas, respaldo y canal mayorista.
@@ -62,14 +64,25 @@ const Html = memo(function Html({ html }) {
   return <div className="contents" dangerouslySetInnerHTML={{ __html: html }} />
 })
 
-function Departamentos() {
+/* Icono de la tarjeta: el de ICONO (src/datos/categorias.js) o el de la
+   familia que sugiere el nombre de la categoria y sus hijas */
+function iconoDe(c) {
+  const id = ICONO[c.slug] || lineaDe([c.nombre, ...c.hijos.map((h) => h.nombre)].join(' '))
+  return lineaPorId(id)?.Icono || null
+}
+
+function Categorias() {
+  const { catalogo } = useTienda()
+  const raices = catalogo.datos.categorias.raices.slice(0, EN_LA_BARRA)
+  const cargando = catalogo.estado === 'cargando'
+  if (!cargando && raices.length === 0) return null
   return (
     <section aria-labelledby="titulo-deptos" className="cr-inicio-bloque">
       <div className="mb-4 flex items-end justify-between gap-4 px-1">
         <div>
           <p className="cr-eyebrow mb-1.5">Tienda</p>
           <h2 id="titulo-deptos" className="font-display text-xl font-bold sm:text-2xl">
-            Comprá por departamento
+            Comprá por categoría
           </h2>
         </div>
         <Link to="/productos" className="cr-link hidden text-sm font-semibold sm:inline">
@@ -77,22 +90,32 @@ function Departamentos() {
         </Link>
       </div>
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {LINEAS.map((l) => (
-          <li key={l.id}>
-            <Link to={`/productos/${l.id}`} className="cr-solido cr-solido-hover group flex h-full flex-col gap-3 p-4">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-cr-blue/10 text-cr-blue transition-colors group-hover:bg-cr-blue group-hover:text-white dark:bg-white/10 dark:text-cr-blue-glow">
-                <l.Icono className="h-5 w-5" />
-              </span>
-              <span>
-                <span className="block font-display text-sm font-bold leading-tight text-black group-hover:text-cr-blue dark:text-white dark:group-hover:text-cr-blue-glow">
-                  {l.titulo}
-                </span>
-                <span className="cr-muted mt-1 block text-xs leading-snug">{l.resumen}</span>
-              </span>
-            </Link>
-          </li>
-        ))}
+        {cargando
+          ? Array.from({ length: EN_LA_BARRA }).map((_, i) => <li key={i} className="cr-solido h-[132px] animate-pulse" aria-hidden="true" />)
+          : raices.map((c) => {
+              const Icono = iconoDe(c)
+              return (
+                <li key={c.slug}>
+                  <Link to={enlaceCategoria(c.slug)} className="cr-solido cr-solido-hover group flex h-full flex-col gap-3 p-4">
+                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-cr-blue/10 text-cr-blue transition-colors group-hover:bg-cr-blue group-hover:text-white dark:bg-white/10 dark:text-cr-blue-glow">
+                      {Icono && <Icono className="h-5 w-5" />}
+                    </span>
+                    <span>
+                      <span className="block font-display text-sm font-bold leading-tight text-black group-hover:text-cr-blue dark:text-white dark:group-hover:text-cr-blue-glow">
+                        {c.nombre}
+                      </span>
+                      <span className="cr-muted mt-1 line-clamp-2 text-xs leading-snug">
+                        {c.hijos.length ? c.hijos.slice(0, 3).map((h) => h.nombre).join(' · ') : `${c.n} ${c.n === 1 ? 'producto' : 'productos'}`}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
       </ul>
+      <Link to="/productos" className="cr-link mt-3 inline-block px-1 text-sm font-semibold sm:hidden">
+        Ver todas las categorías
+      </Link>
     </section>
   )
 }
@@ -455,7 +478,7 @@ export default function Inicio() {
         <Html html={heroHtml} />
 
         <div className="cr-inicio-tienda">
-          <Departamentos />
+          <Categorias />
           <SinCatalogo />
           <CarruselProductos
             eyebrow={hayRanking ? 'Tendencia' : 'Selección'}

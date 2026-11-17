@@ -2,11 +2,13 @@
  * lineas.js
  * -----------------------------------------------------------------------
  * Las familias de producto de Control Red (las cuatro de la web v1 mas
- * energia y accesorios) son los departamentos de la tienda.
+ * energia y accesorios). Ya NO son la navegacion de la tienda: se navega por
+ * las categorias del ERP (`categorias.js`, orden en `src/datos/categorias.js`).
+ * Las lineas quedan como criterio tecnico interno (similares, compatibles,
+ * venta cruzada del carrito, icono de respaldo) y no se muestran como menu.
  *
- * El ERP tiene su propio arbol de categorias (mas fino y cambiante). La web
- * no lo replica: ubica cada categoria del ERP dentro de una linea por
- * palabras clave. Lo que no encaja cae en "accesorios", nunca se pierde.
+ * Cada categoria del ERP se ubica en una linea por palabras clave. Lo que no
+ * encaja cae en "accesorios", nunca se pierde.
  */
 
 const svg = {

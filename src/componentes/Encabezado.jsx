@@ -3,7 +3,8 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import Buscador from '../tienda/Buscador.jsx'
 import { useTienda } from '../tienda/TiendaContext.jsx'
 import { useCuenta } from '../cuenta/CuentaContext.jsx'
-import { LINEAS } from '../tienda/lineas.jsx'
+import { cadenaDeCategoria, enlaceCategoria } from '../tienda/categorias.js'
+import { EN_LA_BARRA } from '../datos/categorias.js'
 import { IconoBuscar, IconoCarrito, IconoCorazon, IconoUsuario } from '../tienda/Iconos.jsx'
 import { BotonTema } from './Tema.jsx'
 
@@ -11,7 +12,8 @@ import { BotonTema } from './Tema.jsx'
  * Encabezado de la tienda con la identidad de la web v1: barra de confianza
  * (Hikvision), barra de vidrio sticky con el logo de Control Red y el boton
  * de tema. Se le suman las herramientas de compra (buscador, cuenta,
- * favoritos, carrito) y, en escritorio, una fila de departamentos.
+ * favoritos, carrito) y, en escritorio, una fila de categorias del ERP
+ * (las primeras a un clic; todas, con sus hijas, en el menu «Categorías»).
  *
  * Mide su alto y lo publica en --chrome-h: el hero de la v1 completa el
  * primer viewport con ese valor descontado.
@@ -86,12 +88,56 @@ function BotonFavoritos({ className = '' }) {
   )
 }
 
+/* Menu «Categorías»: todas las raices del ERP con sus primeras hijas */
+const HIJAS_EN_MENU = 5
+
+function MenuCategorias({ raices, onElegir }) {
+  return (
+    <div id="cr-menu-categorias" className="cr-menu-categorias">
+      <div className="container">
+        <ul className="cr-menu-cat-cols">
+          {raices.map((r) => (
+            <li key={r.slug} className="cr-menu-cat-grupo">
+              <Link to={enlaceCategoria(r.slug)} onClick={onElegir} className="cr-menu-cat-raiz">
+                {r.nombre}
+              </Link>
+              {r.hijos.length > 0 && (
+                <ul>
+                  {r.hijos.slice(0, HIJAS_EN_MENU).map((h) => (
+                    <li key={h.slug}>
+                      <Link to={enlaceCategoria(h.slug)} onClick={onElegir} className="cr-menu-cat-hija">
+                        {h.nombre}
+                      </Link>
+                    </li>
+                  ))}
+                  {r.hijos.length > HIJAS_EN_MENU && (
+                    <li>
+                      <Link to={enlaceCategoria(r.slug)} onClick={onElegir} className="cr-menu-cat-hija cr-menu-cat-mas">
+                        Ver las {r.hijos.length} de {r.nombre}
+                      </Link>
+                    </li>
+                  )}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
 export default function Encabezado() {
   const location = useLocation()
   const raiz = useRef(null)
   const [scrolled, setScrolled] = useState(false)
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [buscarAbierto, setBuscarAbierto] = useState(false)
+  const [categoriasAbierto, setCategoriasAbierto] = useState(false)
+  const filaCategorias = useRef(null)
+  const { catalogo } = useTienda()
+  const arbol = catalogo.datos.categorias
+  const raices = arbol.raices
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -103,6 +149,7 @@ export default function Encabezado() {
   useEffect(() => {
     setMenuAbierto(false)
     setBuscarAbierto(false)
+    setCategoriasAbierto(false)
   }, [location.pathname, location.search, location.hash])
 
   useEffect(() => {
@@ -110,6 +157,7 @@ export default function Encabezado() {
       if (e.key === 'Escape') {
         setMenuAbierto(false)
         setBuscarAbierto(false)
+        setCategoriasAbierto(false)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -133,7 +181,20 @@ export default function Encabezado() {
     return () => ro.disconnect()
   }, [])
 
+  /* Fuera del menu «Categorías», un toque lo cierra */
+  useEffect(() => {
+    if (!categoriasAbierto) return undefined
+    const fuera = (e) => {
+      if (!filaCategorias.current?.contains(e.target)) setCategoriasAbierto(false)
+    }
+    document.addEventListener('pointerdown', fuera)
+    return () => document.removeEventListener('pointerdown', fuera)
+  }, [categoriasAbierto])
+
   const enCatalogo = location.pathname.startsWith('/producto')
+  /* Raiz de la categoria que se esta mirando (`/productos/<slug>`), para marcarla en la fila */
+  const slugActual = location.pathname.match(/^\/productos\/([a-z0-9-]+)/)?.[1] || ''
+  const raizActual = slugActual ? cadenaDeCategoria(arbol, slugActual)[0]?.slug : null
 
   return (
     <div ref={raiz} className="contents">
@@ -192,8 +253,8 @@ export default function Encabezado() {
             </div>
           </div>
 
-          {/* Departamentos (escritorio): el catalogo a un clic */}
-          <nav className="cr-deptos" aria-label="Departamentos">
+          {/* Categorias (escritorio): el catalogo a un clic */}
+          <nav className="cr-deptos" aria-label="Categorías" ref={filaCategorias}>
             <div className="container cr-deptos-fila">
               <NavLink to="/productos" end className={({ isActive }) => `cr-depto cr-depto--todos ${isActive || enCatalogo ? 'is-active' : ''}`}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
@@ -201,10 +262,31 @@ export default function Encabezado() {
                 </svg>
                 Todos los productos
               </NavLink>
-              {LINEAS.map((l) => (
-                <NavLink key={l.id} to={`/productos/${l.id}`} className={({ isActive }) => `cr-depto ${isActive ? 'is-active' : ''}`}>
-                  {l.titulo}
-                </NavLink>
+              {raices.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setCategoriasAbierto((v) => !v)}
+                  aria-expanded={categoriasAbierto}
+                  aria-controls="cr-menu-categorias"
+                  className={`cr-depto ${categoriasAbierto ? 'is-active' : ''}`}
+                >
+                  Categorías
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={`h-3.5 w-3.5 transition-transform ${categoriasAbierto ? 'rotate-180' : ''}`} aria-hidden="true">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+              )}
+              {/* En el DOM justo despues del boton: el Tab entra al menu abierto */}
+              {categoriasAbierto && <MenuCategorias raices={raices} onElegir={() => setCategoriasAbierto(false)} />}
+              {raices.slice(0, EN_LA_BARRA).map((c) => (
+                <Link
+                  key={c.slug}
+                  to={enlaceCategoria(c.slug)}
+                  aria-current={raizActual === c.slug ? 'page' : undefined}
+                  className={`cr-depto ${raizActual === c.slug ? 'is-active' : ''}`}
+                >
+                  {c.nombre}
+                </Link>
               ))}
               <span className="cr-deptos-sep" aria-hidden="true" />
               {SECCIONES.slice(0, 2).map((s) => (
@@ -228,12 +310,21 @@ export default function Encabezado() {
           <Link to="/productos" className="btn btn-primary">
             Ver todos los productos
           </Link>
-          {LINEAS.map((l) => (
-            <Link key={l.id} to={`/productos/${l.id}`} className="cr-hoja-linea">
-              <l.Icono className="h-5 w-5 shrink-0" />
-              {l.titulo}
+          {raices.slice(0, EN_LA_BARRA).map((c) => (
+            <Link key={c.slug} to={enlaceCategoria(c.slug)} className="cr-hoja-linea">
+              {c.nombre}
             </Link>
           ))}
+          {raices.length > EN_LA_BARRA && (
+            <details className="cr-hoja-mas">
+              <summary>Más categorías</summary>
+              {raices.slice(EN_LA_BARRA).map((c) => (
+                <Link key={c.slug} to={enlaceCategoria(c.slug)} className="cr-hoja-linea">
+                  {c.nombre}
+                </Link>
+              ))}
+            </details>
+          )}
           <Link to="/favoritos">Mis favoritos</Link>
           <Link to="/cuenta">Mi cuenta</Link>
           {SECCIONES.map((s) => (

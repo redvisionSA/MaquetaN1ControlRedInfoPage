@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom'
+import { useTienda } from '../tienda/TiendaContext.jsx'
+import { enlaceCategoria } from '../tienda/categorias.js'
+import { EN_LA_BARRA } from '../datos/categorias.js'
 import EMPRESA from '../datos/empresa.js'
-import { LINEAS } from '../tienda/lineas.jsx'
 import { enlaceConsulta } from '../tienda/whatsapp.js'
 
-/** Pie de la web v1 (footer azul noche), con los departamentos de la tienda. */
+/** Pie de la web v1 (footer azul noche), con las primeras categorias de la tienda. */
 export default function Pie() {
+  const { catalogo } = useTienda()
+  const raices = catalogo.datos.categorias.raices.slice(0, EN_LA_BARRA)
   return (
     <footer>
       <div className="container">
@@ -22,9 +26,9 @@ export default function Pie() {
               <li>
                 <Link to="/productos">Todos los productos</Link>
               </li>
-              {LINEAS.map((l) => (
-                <li key={l.id}>
-                  <Link to={`/productos/${l.id}`}>{l.titulo}</Link>
+              {raices.map((c) => (
+                <li key={c.slug}>
+                  <Link to={enlaceCategoria(c.slug)}>{c.nombre}</Link>
                 </li>
               ))}
             </ul>

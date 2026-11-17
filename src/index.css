@@ -379,6 +379,79 @@
 .cr-deptos-sep {
   flex: 1 0 12px;
 }
+button.cr-depto {
+  cursor: pointer;
+}
+
+/* Menu «Categorías»: todas las raices del ERP con sus primeras hijas. Se
+   ubica contra .cr-deptos (la fila tiene overflow y no lo recorta porque no
+   es su bloque contenedor). */
+.cr-deptos {
+  position: relative;
+}
+.cr-menu-categorias {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  max-height: calc(100svh - var(--chrome-h, 140px) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-2);
+}
+.cr-menu-cat-cols {
+  columns: 5 190px;
+  column-gap: 28px;
+  padding: 18px 0 22px;
+}
+.cr-menu-cat-grupo {
+  break-inside: avoid;
+  padding-bottom: 14px;
+}
+.cr-menu-cat-raiz,
+.cr-menu-cat-hija {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  padding: 0 8px;
+  transition:
+    color 0.2s var(--ease),
+    background-color 0.2s var(--ease);
+}
+.cr-menu-cat-raiz {
+  min-height: 40px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+.cr-menu-cat-hija {
+  min-height: 34px;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+.cr-menu-cat-mas {
+  font-weight: 600;
+  color: var(--accent);
+}
+.cr-menu-cat-raiz:hover,
+.cr-menu-cat-hija:hover,
+.cr-menu-cat-raiz:focus-visible,
+.cr-menu-cat-hija:focus-visible {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+/* Pantalla tactil: cada opcion de al menos 44 px */
+@media (pointer: coarse) {
+  .cr-menu-cat-raiz,
+  .cr-menu-cat-hija,
+  .cr-depto {
+    min-height: 44px;
+  }
+}
 
 /* Hoja movil: la v1 la limitaba a 340 px; la tienda tiene mas entradas */
 header.nav.menu-open .nav-links-mobile {
@@ -389,6 +462,33 @@ header.nav.menu-open .nav-links-mobile {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+.cr-hoja-mas > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 16px 4px;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  list-style: none;
+}
+.cr-hoja-mas > summary::-webkit-details-marker {
+  display: none;
+}
+.cr-hoja-mas > summary::after {
+  content: '+';
+  font-size: 1.2rem;
+}
+.cr-hoja-mas[open] > summary::after {
+  content: '\2212';
+}
+.cr-hoja-mas > a {
+  display: flex;
+  padding-left: 20px;
 }
 .cr-hoja-tema {
   display: flex;

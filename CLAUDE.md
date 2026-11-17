@@ -38,16 +38,22 @@ de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se 
 | Entrada, rutas | `index.html` (meta, OG y JSON-LD de la v1, FAQ alineada con la del inicio), `src/main.jsx`, `src/App.jsx` |
 | Estilos | `src/index.css` (Tailwind + piezas `cr-*` de la tienda) y **después** `src/estilos/v1.css` (CSS de la v1: tokens `--bg/--accent/--glass-*`, barra, hero, showroom, ubicación, FAQ, pie). Tema oscuro = `data-theme="dark"` en `<html>` (Tailwind `darkMode: ['selector', ...]`). |
 | Tema | `src/componentes/Tema.jsx`: arranca siempre claro; avisa `themechange` (lo escuchan hero y partículas). |
-| Barra y pie | `src/componentes/Encabezado.jsx` (barra de confianza Hikvision + barra v1 + buscador, cuenta, favoritos, carrito; fila de departamentos desde 921 px; publica `--chrome-h` para el hero), `Pie.jsx` |
+| Barra y pie | `src/componentes/Encabezado.jsx` (barra de confianza Hikvision + barra v1 + buscador, cuenta, favoritos, carrito; fila de categorías del ERP desde 921 px con el menú «Categorías» (todas, con sus hijas); publica `--chrome-h` para el hero), `Pie.jsx` |
 | Vitrina v1 | `src/vitrina/hero.html`, `tecnologias.html` (HTML de la v1, imágenes extraídas a `public/img/`) y `montar.js` (scripts de la v1 con limpieza de listeners/observers/RAF/GPU al salir del inicio; generado una vez con `scripts/generar-montar.mjs`, ahora se edita a mano). Video del showroom en `public/video/`. |
-| Inicio | `src/paginas/Inicio.jsx`: hero → departamentos → carrusel → tecnologías (cada tarjeta enlaza a `/productos?q=…`) → marcas → respaldo → banda mayorista → proyectos/capacitaciones (reducido) → ubicación y canales → preguntas → banda CTA. |
+| Inicio | `src/paginas/Inicio.jsx`: hero → categorías (las primeras del ERP) → carrusel → tecnologías (cada tarjeta enlaza a `/productos?q=…`) → marcas → respaldo → banda mayorista → proyectos/capacitaciones (reducido) → ubicación y canales → preguntas → banda CTA. |
 | Tienda (motores de RV) | `src/tienda/*` (catálogo, búsqueda y facetas, buscador, líneas, marcas, similares/compatibles, disponibilidad, carrito, WhatsApp, popularidad), `src/cuenta/*`, `src/paginas/{Catalogo,Producto,Carrito,Favoritos,Cuenta}.jsx` |
 | Datos de contacto | `src/datos/empresa.js` (fuente única; el JSON-LD de `index.html` es manual) |
 | Servidor | `api/pedido.js` (Resend, número `CR-W-AAMMDD-XXXXX`), `api/_popularidad.js`, `api/_limites.js`, `functions/` (adaptador `_vercel.js`, `api/pedido`, `api/evento`, `api/populares`) |
 
 ### Diferencias con la tienda de RV
-- **Líneas** (`lineas.jsx`): las cuatro familias de la v1 + energía + accesorios: `cctv`, `accesos`,
-  `alarmas`, `conectividad` (portones, placas, redes), `energia`, `accesorios`.
+- **Categorías del ERP** (17/11): la tienda se navega por el árbol `categories` del catálogo
+  (`src/tienda/categorias.js`): `/productos/<slug>` incluye a sus descendientes; menú y fila del encabezado,
+  panel y chips del catálogo, migas, inicio y pie. **Orden y alias en un solo archivo:
+  `src/datos/categorias.js`** (`PRIORIDAD`, el resto alfabético, `AL_FINAL` y «…-outlet» al final; sin
+  productos no se muestra; `NOMBRE_VISIBLE` para nombres internos; `LINEAS_VIEJAS` redirige los links
+  viejos `/productos/<linea>`, `?linea=`, `?categoria=` y `?cat=`). La faceta plana «Categoría» se quitó.
+- **Líneas** (`lineas.jsx`): ya no se muestran; quedan como criterio interno (similares, compatibles,
+  venta cruzada, icono de respaldo): `cctv`, `accesos`, `alarmas`, `conectividad`, `energia`, `accesorios`.
 - **Marcas**: Hikvision `oficial: true` (sello «Hik Tech Ambassador oficial» en su ficha, `SelloHikvision.jsx`);
   Dahua es una marca más. Tecnologías nuevas en `specs.js`: TandemVu, DarkFighter, **Turbo HD**
   (los compatibles comparan IP contra analógico HD, Turbo HD o HDCVI).
