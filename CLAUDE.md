@@ -4,7 +4,7 @@ Tienda en línea de **Control Red S.R.L.** (seguridad electrónica, Hikvision co
 referencia, local en Av. Gaona 3565, Flores, CABA). Rama `claude/tienda-cr` (16/11/2026): el sitio
 pasó de un `index.html` vanilla a una tienda 100 % enfocada en vender, construida sobre los motores
 de la tienda de REDVISION (repo `RedvisionWeb`, rama `claude/stock-sesion`). Se conservan el
-**hero** (emblema 3D) y la sección **tecnologías** (`#tecnologias`, showroom Hikvision) de la web v1.
+**hero** (emblema 3D) y la sección **Demos en vivo** (`#demos`; `#tecnologias` sigue como alias para links viejos; showroom Hikvision) de la web v1.
 
 - Repo: `github.com/redvisionSA/MaquetaN1ControlRedInfoPage`. `main` local = v1 + v2 (`cb6f761`,
   lo publicado) ; `claude/tienda-cr` = `main` + `origin/main` (`355b83b`, teléfono 11 2480-2161) + la tienda.

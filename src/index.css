@@ -12,6 +12,11 @@
    ========================================================================== */
 
 @layer base {
+  /* Anclas del inicio (#demos, #proyectos...): la seccion queda debajo de la
+     barra fija, que publica su alto en --chrome-h (Encabezado.jsx). */
+  main [id] {
+    scroll-margin-top: var(--chrome-h, 98px);
+  }
   html {
     -webkit-tap-highlight-color: transparent;
     /* Lienzo de las paginas sin fondo animado (la tienda). En el inicio el

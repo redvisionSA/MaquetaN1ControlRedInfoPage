@@ -126,7 +126,9 @@
 @media (prefers-reduced-motion: reduce){ .glow::after{ transition:none; } }
 
 *,*::before,*::after{box-sizing:border-box;}
-html{scroll-behavior:smooth; overflow-x:hidden; max-width:100%;}
+/* overflow-x:clip (donde exista) en vez de hidden: con hidden en html y body, body
+   pasa a ser contenedor de scroll y el header.nav sticky nunca se pega. */
+html{scroll-behavior:smooth; overflow-x:hidden; overflow-x:clip; max-width:100%;}
 body{
   margin:0;
   font-family:'Plus Jakarta Sans', system-ui, sans-serif;
@@ -135,6 +137,7 @@ body{
   transition:color .4s var(--ease);
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
+  overflow-x:clip;
 }
 /* El canvas de partículas pinta el color de fondo real de la página cada frame;
    todo el contenido va por encima gracias a este stacking explícito. */

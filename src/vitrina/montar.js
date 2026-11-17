@@ -604,7 +604,7 @@ export function montarVitrina(raiz) {
    nocturna vectorial con distintos "sensores".
    ========================================================================== */
 (function(){
-  var section = document.getElementById('tecnologias');
+  var section = document.getElementById('demos');
   var stage   = document.getElementById('techStage');
   var track   = document.getElementById('techTrack');
   if(!section || !stage || !track) return;

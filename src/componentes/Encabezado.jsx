@@ -20,7 +20,7 @@ import { BotonTema } from './Tema.jsx'
  */
 
 const SECCIONES = [
-  { to: '/#tecnologias', label: 'Tecnologías 3D' },
+  { to: '/#demos', label: 'Demos en vivo' },
   { to: '/#proyectos', label: 'Proyectos' },
   { to: '/#ubicacion', label: 'Local de Flores' },
   { to: '/#preguntas-frecuentes', label: 'Preguntas frecuentes' },
@@ -150,7 +150,7 @@ export default function Encabezado() {
     setMenuAbierto(false)
     setBuscarAbierto(false)
     setCategoriasAbierto(false)
-  }, [location.pathname, location.search, location.hash])
+  }, [location.pathname, location.search, location.hash, location.key])
 
   useEffect(() => {
     const onKey = (e) => {

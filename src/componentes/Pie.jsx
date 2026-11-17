@@ -37,7 +37,7 @@ export default function Pie() {
             <p className="footer-h">Control Red</p>
             <ul>
               <li>
-                <Link to="/#tecnologias">Tecnologías 3D</Link>
+                <Link to="/#demos">Demos en vivo</Link>
               </li>
               <li>
                 <Link to="/#proyectos">Macroproyectos</Link>
